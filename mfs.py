@@ -49,6 +49,8 @@ class Directory:
     def __shell_quote(self, s):
         return "'" + s.replace("'", "'\\''") + "'"
 
+    # def list_pre_dir(self):
+
     def play_item(self):
         while True:
             try:
@@ -56,14 +58,16 @@ class Directory:
                 if choice == "q":
                     print "exiting..."
                     break
-                sound = self.__shell_quote(self.files[int(choice)])
+                sound = self.__shell_quote(self.files[int(choice)-1])
                 print sound
-                system('mpv %s 1>/dev/null 2>&1' % sound)
+                system('mpv %s' % sound)
 
             except IndexError:
                 print "You may only choose a file with a listed number."
             except ValueError:
                 print "You may only enter a number."
+
+
 
         #subprocess.Popen(["mpv", sound], stdin=subprocess.PIPE,
         #                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
