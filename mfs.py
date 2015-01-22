@@ -15,9 +15,6 @@ import subprocess
 
 
 class Directory:
-    # self.path = ""
-    # self.dirs = []
-    # self.files = []
 
     def __init__(self, path):
         for (p, d, f) in walk(path):
@@ -29,7 +26,8 @@ class Directory:
         # Change so it uses walk()'s data structure
         files = self.files
         files.sort()
-        return {i: files[i-1] for i in range(1, len(files)+1)}
+        return files
+        # return {i: files[i-1] for i in range(1, len(files)+1)}
 
     def list_dirs(self):
         dirs = self.dirs
@@ -37,11 +35,7 @@ class Directory:
         dirs.sort()
         return {i: dirs[i-1] for i in range(1, len(dirs)+1)}
 
-    def print_list_files(self):
-        d = self.list_files()
-        print "Media Files: ", '\n'
-        for x in d.keys():
-            print x, ':', d[x]
+
 
     def prevdir(self):
         return abspath(join(self.path, pardir))
@@ -51,23 +45,8 @@ class Directory:
 
     # def list_pre_dir(self):
 
-    def play_item(self):
-        while True:
-            try:
-                choice = raw_input("Choose a media file to play: ")
-                if choice == "q":
-                    print "exiting..."
-                    break
-                sound = self.__shell_quote(self.files[int(choice)-1])
-                print sound
-                system('mpv %s' % sound)
-
-            except IndexError:
-                print "You may only choose a file with a listed number."
-            except ValueError:
-                print "You may only enter a number."
-
-
-
+    def play_item(self, idx):
+        sound = self.__shell_quote(self.files[idx])
+        system('mpv %s' % sound)
         #subprocess.Popen(["mpv", sound], stdin=subprocess.PIPE,
         #                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
