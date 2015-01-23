@@ -6,18 +6,15 @@ __author__ = 'raquel'
 # print ls_files
 
 
-#!/usr/bin/ python
-from os import listdir
 from os.path import isfile, join, abspath, pardir
-from os import walk, system, chdir, getcwd
-import subprocess
+from os import walk, system, chdir, getcwd, listdir
 
 class Item:
     def __init__(self, name, type):
         self.name = name
         self.type = type
 
-    def __repr__(self):
+    def __str__(self):
         if self.is_dir():
             return "[ %s ]" % self.name
         else:
@@ -34,7 +31,7 @@ class Item:
             sound = self.__shell_quote(self.name)
             system('mpv %s' % sound)
         else:
-            # Should raise excep
+            # Should raise exception
             raise ValueError("Can't play back %s because it is not a file" % self)
         #subprocess.Popen(["mpv", sound], stdin=subprocess.PIPE,
         #                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -70,9 +67,10 @@ class Directory(object):
 
     # def list_pre_dir(self):
 
+
 class Browser(Directory):
 
-    def __init__(self, path = getcwd()):
+    def __init__(self, path=getcwd()):
         super(Browser, self).__init__(path)
 
     def chdir(self, item):

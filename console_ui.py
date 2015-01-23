@@ -2,9 +2,10 @@
 
 __author__ = 'raquel'
 
-from mfs import Directory
-from pprint import pprint
+# from mfs import Browser
 import readline
+import sys
+import operator
 
 
 class Console_ui:
@@ -13,26 +14,30 @@ class Console_ui:
         self.update_pwd()
 
     def update_pwd(self):
-        self.pwdlist = self.d.list_files()
-        self.pwdlist.sort()
-        tmp = self.d.list_dirs()
-        tmp.sort()
+        self.pwdlist = sorted([i for i in self.d.list_dirs() if not i.name.startswith('.')], key=lambda x: x.name)
+        tmp = sorted([i for i in self.d.list_files() if not i.name.startswith('.')], key=lambda x: x.name)
         self.pwdlist.extend(tmp)
-
+        # self.tmp.extend(pwdlist)
 
     def print_list_pwd(self):
-        print "Listing of %s: " % self.d.path, '\n'
+        print '\n', "Listing of %s: " % self.d.path
+        print "=" * (len(self.d.path)+13)
         for x in range(len(self.pwdlist)):
-            print x+1, ':', self.pwdlist[x]
+            print "{:3d} : {}".format(x+1, self.pwdlist[x])
 
     def event_loop(self):
 
-        readline.parse_and_bind('tab: complete')
+        # readline.parse_and_bind('tab: complete')
         readline.parse_and_bind('set editing-mode vi')
 
         while True:
             self.print_list_pwd()
-            choice = raw_input("Choose a media file to play: ")
+            try:
+                choice = raw_input("Choose a media file to play: ")
+            except KeyboardInterrupt:
+                print '\nKeyboard interrupt caught, exiting...'
+                sys.exit()
+
             if choice == "q":
                 print "exiting..."
                 break
@@ -40,14 +45,18 @@ class Console_ui:
                 self.d.cdup()
                 self.update_pwd()
             else:
-                item = self.pwdlist[int(choice)-1]
-                print item
-                if item.is_file():
-                    item.play()
-                elif item.is_dir():
-                    self.d.chdir(item)
-                    self.update_pwd()
-            # try:
+                try:
+                    item = self.pwdlist[int(choice)-1]
+                    print item
+                    if item.is_file():
+                        item.play()
+                    elif item.is_dir():
+                        self.d.chdir(item)
+                        self.update_pwd()
+                except Exception as e:
+                    print "Error in input: %s" % e
+                    print "Please enter a correct index for the file."
+                # try:
             #     l = self.d.list_files()
             #     item = l[int(choice)-1]
             #     print item
