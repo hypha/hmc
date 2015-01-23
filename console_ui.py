@@ -10,12 +10,20 @@ import readline
 class Console_ui:
     def __init__(self, d):
         self.d = d
+        self.update_pwd()
 
-    def print_list_files(self):
-        l = self.d.list_files()
-        print "Media Files: ", '\n'
-        for x in range(len(l)):
-            print x+1, ':', l[x]
+    def update_pwd(self):
+        self.pwdlist = self.d.list_files()
+        self.pwdlist.sort()
+        tmp = self.d.list_dirs()
+        tmp.sort()
+        self.pwdlist.extend(tmp)
+
+
+    def print_list_pwd(self):
+        print "Listing of %s: " % self.d.path, '\n'
+        for x in range(len(self.pwdlist)):
+            print x+1, ':', self.pwdlist[x]
 
     def event_loop(self):
 
@@ -23,18 +31,31 @@ class Console_ui:
         readline.parse_and_bind('set editing-mode vi')
 
         while True:
-            self.print_list_files()
+            self.print_list_pwd()
             choice = raw_input("Choose a media file to play: ")
             if choice == "q":
                 print "exiting..."
                 break
-            try:
-                l = self.d.list_files()
-                print l[int(choice)-1]
-                self.d.play_item(int(choice)-1)
-            except IndexError:
-                print "You may only choose a file with a listed number."
-            except ValueError:
-                print "You may only enter a number."
+            elif choice == "..":
+                self.d.cdup()
+                self.update_pwd()
+            else:
+                item = self.pwdlist[int(choice)-1]
+                print item
+                if item.is_file():
+                    item.play()
+                elif item.is_dir():
+                    self.d.chdir(item)
+                    self.update_pwd()
+            # try:
+            #     l = self.d.list_files()
+            #     item = l[int(choice)-1]
+            #     print item
+            #     if item.is_file():
+            #         item.play()
+            # except IndexError:
+            #     print "You may only choose a file with a listed number."
+            # except ValueError:
+            #     print "You may only enter a number."
 
 
