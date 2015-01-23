@@ -1,13 +1,10 @@
 __author__ = 'raquel'
-# import subprocess
-# files = subprocess.popen('ls', stdout=subprocess.pipe)
-# ls_files = files.stdout.read()
-# print type(ls_files)
-# print ls_files
+__version__ = '0.1'
 
 
-from os.path import isfile, join, abspath, pardir
-from os import walk, system, chdir, getcwd, listdir
+from os.path import join, abspath, pardir
+from os import walk, system, chdir, getcwd
+
 
 class Item:
     def __init__(self, name, type):
@@ -64,8 +61,6 @@ class Directory(object):
 
     def prevdir(self):
         return abspath(join(self.path, pardir))
-
-    # def list_pre_dir(self):
 
 
 class Browser(Directory):

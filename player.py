@@ -1,10 +1,9 @@
 #!/usr/bin/python
 
 __author__ = 'raquel'
+__version__ = '0.1'
 
-from mfs import Directory, Browser
-from pprint import pprint
-import readline
+from mfs import Browser
 from console_ui import Console_ui
 
 

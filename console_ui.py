@@ -1,11 +1,9 @@
 #!/usr/bin/python
 
 __author__ = 'raquel'
-
-# from mfs import Browser
+__version__ = '0.1'
 import readline
 import sys
-import operator
 
 
 class Console_ui:
@@ -56,15 +54,5 @@ class Console_ui:
                 except Exception as e:
                     print "Error in input: %s" % e
                     print "Please enter a correct index for the file."
-                # try:
-            #     l = self.d.list_files()
-            #     item = l[int(choice)-1]
-            #     print item
-            #     if item.is_file():
-            #         item.play()
-            # except IndexError:
-            #     print "You may only choose a file with a listed number."
-            # except ValueError:
-            #     print "You may only enter a number."
 
 
