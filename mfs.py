@@ -3,7 +3,8 @@ __version__ = '0.1'
 
 
 from os.path import join, abspath, pardir
-from os import walk, system, chdir, getcwd
+from os import walk, system, chdir, getcwd, popen
+import subprocess
 
 
 class Item:
@@ -23,19 +24,15 @@ class Item:
     def is_dir(self):
         return self.type == "dir"
 
-    def play(self):
-        if self.is_file():
-            sound = self.__shell_quote(self.name)
-            system('mpv %s' % sound)
-        else:
-            # Should raise exception
-            raise ValueError("Can't play back %s because it is not a file" % self)
-        #subprocess.Popen(["mpv", sound], stdin=subprocess.PIPE,
-        #                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
     def __shell_quote(self, s):
         return "'" + s.replace("'", "'\\''") + "'"
 
+    def play(self):
+        if self.is_file():
+            subprocess.call(["mpv",  self.name])
+        else:
+            # Should raise exception
+            raise ValueError("Can't play back %s because it is not a file" % self)
 
 
 class Directory(object):
