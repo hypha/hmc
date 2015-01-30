@@ -5,7 +5,8 @@ __version__ = '0.1'
 from os.path import join, abspath, pardir
 from os import walk, system, chdir, getcwd, popen
 import subprocess
-
+import re
+# import magic
 
 class Item:
     def __init__(self, name, type):
@@ -26,6 +27,25 @@ class Item:
 
     def __shell_quote(self, s):
         return "'" + s.replace("'", "'\\''") + "'"
+
+    def mime_type(self):
+        mimetype = subprocess.Popen(["file", self.name, '--mime-type', '-b'],
+                                    stdout=subprocess.PIPE).stdout.read().strip()
+        # mimetype = magic.from_file(self.name, mime=True)
+        return mimetype
+
+    def file_type(self):
+        return re.search(r'(\w)+', self.mime_type()).group()
+        # return self.mime_type().split("/")[0]
+
+    def is_av(self):
+        if self.file_type() == "video":
+            return True
+        elif self.file_type() == "audio":
+            return True
+        else:
+            return False
+
 
     def play(self):
         if self.is_file():

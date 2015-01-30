@@ -22,7 +22,8 @@ class Console_ui:
         print '\n', "Listing of %s: " % self.d.path
         print "=" * (len(self.d.path)+13)
         for x in range(len(self.pwdlist)):
-            print "{:3d} : {}".format(x+1, self.pwdlist[x])
+            if self.pwdlist[x].is_dir() or self.pwdlist[x].is_av():
+                print "{:3d} : {}".format(x+1, self.pwdlist[x])
 
     def shuffle_op(self, c):
         if not re.match(r'shuffle', c, re.IGNORECASE) is None:
@@ -82,13 +83,16 @@ class Console_ui:
                 self.d.cdup()
                 self.update_pwd()
             elif choice.isdigit():
-                item = self.pwdlist[int(choice)-1]
-                print item
-                if item.is_file():
-                    item.play()
-                elif item.is_dir():
-                    self.d.chdir(item)
-                    self.update_pwd()
+                try:
+                    item = self.pwdlist[int(choice)-1]
+                    print item
+                    if item.is_file():
+                        item.play()
+                    elif item.is_dir():
+                        self.d.chdir(item)
+                        self.update_pwd()
+                except Exception as e:
+                    print "Error in input: %s" % e
             else:
 
                 try:
