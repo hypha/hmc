@@ -6,6 +6,7 @@ from os.path import join, abspath, pardir
 from os import walk, system, chdir, getcwd, popen
 import subprocess
 import re
+from mimetypes import MimeTypes
 # import magic
 
 class Item:
@@ -29,10 +30,12 @@ class Item:
         return "'" + s.replace("'", "'\\''") + "'"
 
     def mime_type(self):
-        mimetype = subprocess.Popen(["file", self.name, '--mime-type', '-b'],
-                                    stdout=subprocess.PIPE).stdout.read().strip()
-        # mimetype = magic.from_file(self.name, mime=True)
-        return mimetype
+        mime = MimeTypes()
+        mimetype = mime.guess_type(self.name)
+        # mimetype = subprocess.Popen(["file", self.name, '--mime-type', '-b'],
+        #                             stdout=subprocess.PIPE).stdout.read().strip()
+        # # mimetype = magic.from_file(self.name, mime=True)
+        return mimetype[0]
 
     def file_type(self):
         return re.search(r'(\w)+', self.mime_type()).group()
