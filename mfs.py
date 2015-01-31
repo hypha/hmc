@@ -38,7 +38,10 @@ class Item:
         return mimetype[0]
 
     def file_type(self):
-        return re.search(r'(\w)+', self.mime_type()).group()
+        if self.mime_type() is None:
+            return 'unknown'
+        else:
+            return re.search(r'(\w)+', self.mime_type()).group()
         # return self.mime_type().split("/")[0]
 
     def is_av(self):
