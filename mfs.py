@@ -8,6 +8,20 @@ import subprocess
 import re
 from mimetypes import MimeTypes
 # import magic
+import subliminal
+import urllib
+import json
+
+uni, byt, xinput = str, bytes, input
+
+
+def utf8_encode(x):
+    return x.encode("utf8") if isinstance(x, uni) else x
+
+
+def utf8_decode(x):
+    return x.decode("utf8") if isinstance(x, byt) else x
+
 
 class Item:
     def __init__(self, name, type):
@@ -51,7 +65,6 @@ class Item:
             return True
         else:
             return False
-
 
     def play(self):
         if self.is_file():
@@ -98,3 +111,28 @@ class Browser(Directory):
     def cdup(self):
         chdir("..")
         self.__init__(getcwd())
+
+
+class Media():
+    def __init__(self, file):
+        if file.is_dir():
+            raise ValueError("Item instance of type file required")
+        self.file = file
+        self.video = subliminal.Video.fromname(file.name)
+
+    def trailer_url(self):
+        if type(self.video) == subliminal.video.Movie:
+            url = "https://gdata.youtube.com/feeds/api/videos/?q={0}+{1}+trailer&alt=jsonc&v=2"
+            url = url.format(urllib.quote_plus(self.video.title), self.video.year)
+            wdata = utf8_decode(urllib.urlopen(url).read())
+            wdata = json.loads(wdata)
+            return wdata['data']['items'][0]['player']['default']
+        else:
+            raise ValueError('The file or directory must be a Movie')
+
+    def play_trailer(self):
+        try:
+            subprocess.call(["mpv", self.trailer_url()])
+        except Exception as e:
+            print "Error in input: %s" % e
+            print "Please select a Movie file for trailer"

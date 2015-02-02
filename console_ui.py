@@ -6,6 +6,8 @@ import readline
 import sys
 import re
 import random
+from mfs import Media
+
 
 class Console_ui:
     def __init__(self, d):
@@ -32,7 +34,6 @@ class Console_ui:
     def repeat_op(self, c):
         if not re.match(r'repeat', c, re.IGNORECASE) is None:
             return self.option == "repeat"
-
 
     def _bi_range(self, start, end):
         """
@@ -91,36 +92,51 @@ class Console_ui:
                     elif item.is_dir():
                         self.d.chdir(item)
                         self.update_pwd()
+
+                except Exception as e:
+                    print "Error in input: %s" % e
+
+            elif not re.search(r"(trailer) ([1-9]+)", choice) is None:
+                trailer_choice = re.search(r"(trailer) ([1-9]+)", choice).group(2)
+                item = self.pwdlist[int(trailer_choice)-1]
+                try:
+                    Media(item).play_trailer()
+                    print "playing trailer: ", item
                 except Exception as e:
                     print "Error in input: %s" % e
             else:
 
                 try:
                     self.play_list(choice)
+
                 except Exception as e:
                     print "Error in input: %s" % e
                     print "Please enter a correct index for the file."
 
-    def play_list(self, c, shuffle=False, repeat=False):
+    def play_list(self, c, shuffle=False, repeat=False, trailer = False):
         if not re.findall(r'shuffle', c, re.IGNORECASE) is None:
             shuffle = True
         if self.repeat_op(c):
             repeat= "repeat" in self.option + ""
+        if not re.findall(r'trailer', c, re.IGNORECASE) is None:
+            trailer = True
         selection = self.multi_c(c)
         # selection = list(set(selection))
-        songlist = [self.pwdlist[x-1] for x in selection]
+        v_list = [self.pwdlist[x-1] for x in selection]
         if shuffle:
-            random.shuffle(songlist)
+            random.shuffle(v_list)
         n = 0
-        while 0 <= n <= len(songlist)-1:
-            song = songlist[n]
-
+        while 0 <= n <= len(v_list)-1:
+            v = v_list[n]
             try:
-                p = song.play()
+                if trailer:
+                    p = Media(v).play_trailer()
+                else:
+                    p = v.play()
             except KeyboardInterrupt:
                 break
             n += 1
-#
+
     # def play_all(self, c=None):
     #     if all(item.is_file() for item in self.pwdlist):
     #         if not re.match(r'shuffle', c, re.IGNORECASE) is None:
