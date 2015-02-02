@@ -101,11 +101,11 @@ class Console_ui:
                 item = self.pwdlist[int(trailer_choice)-1]
                 try:
                     Media(item).play_trailer()
+
                     print "playing trailer: ", item
                 except Exception as e:
                     print "Error in input: %s" % e
             else:
-
                 try:
                     self.play_list(choice)
 
@@ -113,13 +113,13 @@ class Console_ui:
                     print "Error in input: %s" % e
                     print "Please enter a correct index for the file."
 
-    def play_list(self, c, shuffle=False, repeat=False, trailer = False):
+    def play_list(self, c, shuffle=False, repeat=False, trailer=False):
         if not re.findall(r'shuffle', c, re.IGNORECASE) is None:
             shuffle = True
         if self.repeat_op(c):
             repeat= "repeat" in self.option + ""
         if not re.findall(r'trailer', c, re.IGNORECASE) is None:
-            trailer = True
+            trailer = False
         selection = self.multi_c(c)
         # selection = list(set(selection))
         v_list = [self.pwdlist[x-1] for x in selection]
@@ -133,6 +133,7 @@ class Console_ui:
                     p = Media(v).play_trailer()
                 else:
                     p = v.play()
+
             except KeyboardInterrupt:
                 break
             n += 1
