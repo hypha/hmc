@@ -2,9 +2,12 @@
 Hypha's media centre
 
 Dependency:
+
+
 1. mpv (only checked that the latest version built from https://github.com/mpv-player/mpv-build can play all youtube url with no problem)
 
 2. Need latest version of subliminal which you can get it from https://github.com/Diaoul/subliminal/tree/master/subliminal
+
 3. Note: To install subliminal,  first git clone https://github.com/Diaoul/subliminal.git, then do "sudo python setup.py install" in the directory that it is installed.
       
 
