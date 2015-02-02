@@ -114,14 +114,14 @@ class Console_ui:
                     print "Please enter a correct index for the file."
 
     def play_list(self, c, shuffle=False, repeat=False, trailer=False):
-        if not re.findall(r'shuffle', c, re.IGNORECASE) is None:
+        if not re.findall(r'shuffle', c, re.IGNORECASE) == []:
             shuffle = True
         if self.repeat_op(c):
             repeat= "repeat" in self.option + ""
-        if not re.findall(r'trailer', c, re.IGNORECASE) is None:
-            trailer = False
+        if not re.findall(r'trailer', c, re.IGNORECASE) == []:
+            trailer = True
         selection = self.multi_c(c)
-        # selection = list(set(selection))
+        selection = list(set(selection))
         v_list = [self.pwdlist[x-1] for x in selection]
         if shuffle:
             random.shuffle(v_list)
