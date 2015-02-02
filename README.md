@@ -4,7 +4,7 @@ Hypha's media centre
 Dependency:
 
 
-1. mpv (only checked that the latest version built from https://github.com/mpv-player/mpv-build can play all youtube url with no problem)
+1. mpv (only tested with latest version built from https://github.com/mpv-player/mpv-build; earlier version without eabling ffmpeg options might result in some urls not playing properly; earlier versions should exist in the repositoriy of recent versions of Linux)
 
 2. Need latest version of subliminal which you can get it from https://github.com/Diaoul/subliminal/tree/master/subliminal
 
