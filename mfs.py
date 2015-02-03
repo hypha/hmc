@@ -11,6 +11,9 @@ from mimetypes import MimeTypes
 import subliminal
 import urllib
 import json
+from rottentomatoes import RT
+rt = RT("qzqe4rz874rhxrkrjgrj95g3")
+
 
 uni, byt, xinput = str, bytes, input
 
@@ -136,3 +139,19 @@ class Media():
         except Exception as e:
             print "Error in input: %s" % e
             print "Please select a Movie file for trailer"
+
+
+    def rt_info(self):
+        rt_string = self.video.title + str(" ") + str(self.video.year)
+        film_info = rt.search(rt_string)[0]
+        film_info["genres"] = rt.info(film_info.get("id")).get("genres")
+        film_info["directors"] = rt.info(film_info.get("id")).get("abridged_directors")
+        return film_info
+
+    def format_info(self):
+        info = self.rt_info()
+        order = ["title", "year", "genres", "directors", "runtime", "critics_consensus",
+                 "ratings", "synopsis"]
+        results = [(k, info[k]) for k in order if info[k] != ""]
+        for x in results:
+            print x

@@ -100,11 +100,20 @@ class Console_ui:
                 trailer_choice = re.search(r"(trailer) ([1-9]+)", choice).group(2)
                 item = self.pwdlist[int(trailer_choice)-1]
                 try:
+                    print "\n\n", "playing trailer: ", Media(item).video.title, Media(item).video.year
                     Media(item).play_trailer()
-
-                    print "playing trailer: ", item
                 except Exception as e:
                     print "Error in input: %s" % e
+
+            elif not re.search(r"(info) ([1-9]+)", choice) is None:
+                info_choice = re.search(r"(info) ([1-9]+)", choice).group(2)
+                item = self.pwdlist[int(info_choice)-1]
+                try:
+                    print '\n\n'
+                    Media(item).format_info()
+                except Exception as e:
+                     print "Error in input: %s" % e
+
             else:
                 try:
                     self.play_list(choice)
