@@ -9,7 +9,8 @@ Dependency:
 2. Need latest version of subliminal which you can get it from https://github.com/Diaoul/subliminal/tree/master/subliminal
 
 3. Note: To install subliminal,  first git clone https://github.com/Diaoul/subliminal.git, then do "sudo python setup.py install" in the directory that it is installed.
-      
+
+4. rottentomatoes python library. get the library by pip install rottentomatoes      
 
 How to:
 Method 1: run python hmc.py from where the file is located in 
