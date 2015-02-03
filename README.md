@@ -35,3 +35,4 @@ Command:
 
 7. to play a range of trailers with shuffle, add shuffle before or after command 5.
 
+8. to get information of a film from rotten tomato, do info index.
