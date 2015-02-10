@@ -12,7 +12,8 @@ import subliminal
 import urllib
 import json
 from rottentomatoes import RT
-rt = RT("qzqe4rz874rhxrkrjgrj95g3")
+from imdb import IMDb
+
 
 
 uni, byt, xinput = str, bytes, input
@@ -131,27 +132,130 @@ class Media():
             wdata = json.loads(wdata)
             return wdata['data']['items'][0]['player']['default']
         else:
-            raise ValueError('The file or directory must be a Movie')
+            raise ValueError('The file or directory must be a film')
 
     def play_trailer(self):
         try:
             subprocess.call(["mpv", self.trailer_url()])
         except Exception as e:
             print "Error in input: %s" % e
-            print "Please select a Movie file for trailer"
+            print "Please select a film file for trailer"
+
+    def film_string(self):
+        return self.video.title + str(" ") + str(self.video.year)
+
+    def shrink_title(self):
+        c = 1
+        titles = []
+        title = re.findall(r'\w+', self.video.title)
+        while c < len(title):
+            title = title[0: len(title) - c]
+            titles.append(" ".join(title))
+            c + 1
+        return titles
+
+    def levenshtein(self, s1, s2):
+        s1, s2 = s1.lower(), s2.lower()
+        if len(s1) < len(s2):
+            return self.levenshtein(s2, s1)
+
+        # len(s1) >= len(s2)
+        if len(s2) == 0:
+            return len(s1)
+
+        previous_row = range(len(s2) + 1)
+        for i, c1 in enumerate(s1):
+            current_row = [i + 1]
+            for j, c2 in enumerate(s2):
+                insertions = previous_row[j + 1] + 1
+                deletions = current_row[j] + 1
+                substitutions = previous_row[j] + (c1 != c2)
+                current_row.append(min(insertions, deletions, substitutions))
+            previous_row = current_row
+        return previous_row[-1]
+
+    def score_title(self, imdb_title, title):
+        return float(self.levenshtein(imdb_title, self.video.title)) / len(title)
+
+    def imdb_get_results(self, s):
+        imdb = IMDb()
+        return imdb.search_movie(s)
 
 
-    def rt_info(self):
-        rt_string = self.video.title + str(" ") + str(self.video.year)
-        film_info = rt.search(rt_string)[0]
-        film_info["genres"] = rt.info(film_info.get("id")).get("genres")
-        film_info["directors"] = rt.info(film_info.get("id")).get("abridged_directors")
-        return film_info
+    def imdb_filter_year(self, r):
+        year_l = [ind for ind, x in enumerate(r) if x["year"] == self.video.year]
+        return year_l
+
+    def imdb_akas(self, f):
+        IMDb().update(f)
+        if "akas" in f.keys():
+            akas = f["akas"]                     # and alternative titles
+            if self.score_title(f["title"], self.video.title) <= 0.2:
+                return f
+            elif not [j for j in [re.match(r'([a-zA-Z]+)::', i, re.U).group(1) for i in akas
+                      if not re.match(r'([a-zA-Z]+)::', i, re.U) is None]
+                      if self.score_title(j, self.video.title) <= 0.2] is []:
+                return f
+            else:
+                print "Currently there is no information for this film"
+
+    def shrinked_result(self, r):
+        shrinked = [t for t in self.shrink_title()]
+        films = []
+        for idx, result in enumerate(r):
+            if result != []:
+                d = dict([[i, self.levenshtein(i["title"], shrinked[idx])]
+                          for i in result if i["year"] == self.video.year])
+                film = min(d.items(), key=lambda x: x[1])
+                films.append(film)
+        film = min(films, key=d.get)[0]
+        return film
+
+    def imdb_match(self):
+        results = self.imdb_get_results(self.film_string())
+        if len(results) != 0:                               # 1. has results
+            right_year = self.imdb_filter_year(results)       # 1.1 right year
+            if len(right_year) != 0:                             # 1.11 has year
+                for y in right_year:                               # a. get the film that match with the title
+                    film = results[y]
+                    if self.score_title(film["title"], self.video.title) <= 0.2:
+                        return film
+                    else:                                          # b. if no match, compare akas
+                        film = self.imdb_akas(film)
+                        return film
+            else:                                                 # 1.12 no year
+                scores = [[i, self.levenshtein(i["title"], self.video.title)] for i in results]
+                film = min(scores, key=lambda x: x[1])[0]
+                return film
+        else:
+            results = [self.imdb_get_results(t + str(" ") + str(self.video.year)) for t in self.shrink_title()]
+            return self.shrinked_result(results)
+
+    def imdb_info(self):
+        film = self.imdb_match()
+        IMDb().update(film)
+        return film.summary()
+
+
+    def rt_rating(self):
+        # set up rotten tomato api key
+        rt = RT("qzqe4rz874rhxrkrjgrj95g3")
+        rt_result = rt.search(self.film_string())
+        film = [x for x in rt_result if x["year"] == self.video.year][0]
+        return film["ratings"]
 
     def format_info(self):
-        info = self.rt_info()
-        order = ["title", "year", "genres", "directors", "runtime", "critics_consensus",
-                 "ratings", "synopsis"]
-        results = [(k, info[k]) for k in order if info[k] != ""]
-        for x in results:
-            print x
+        # rt_rating = self.rt_rating()
+        print self.imdb_info()
+        # print "\nRotten Tomato scores: ",
+        # for key, value in rt_rating.iteritems():
+        #     print "%s: %s    " % (key, value),
+        # print
+
+
+# for result in results:
+#     if result != []:
+#         d = dict([[i, levenshtein(i["title"], m.video.title)] for i in result if i["year"] == m.video.year])
+#         print(d)
+#         film = min(d.items(), key=lambda x: x[1])
+#         films.append(film)

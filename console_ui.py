@@ -19,6 +19,7 @@ class Console_ui:
         tmp = sorted([i for i in self.d.list_files() if not i.name.startswith('.')], key=lambda x: x.name)
         self.pwdlist.extend(tmp)
         # self.tmp.extend(pwdlist)
+        return self.pwdlist
 
     def print_list_pwd(self):
         print '\n', "Listing of %s: " % self.d.path
