@@ -181,9 +181,8 @@ class Media():
         imdb = IMDb()
         return imdb.search_movie(s)
 
-
-    def imdb_filter_year(self, r):
-        year_l = [ind for ind, x in enumerate(r) if x["year"] == self.video.year]
+    def filter_year(self, r):
+        year_l = [ind for ind, x in enumerate(r) if "year" in x.keys() and x["year"] == self.video.year]
         return year_l
 
     def imdb_akas(self, f):
@@ -203,18 +202,18 @@ class Media():
         shrinked = [t for t in self.shrink_title()]
         films = []
         for idx, result in enumerate(r):
-            if result != []:
-                d = dict([[i, self.levenshtein(i["title"], shrinked[idx])]
-                          for i in result if i["year"] == self.video.year])
-                film = min(d.items(), key=lambda x: x[1])
+            if len(result) != 0:
+                d = [[i, self.levenshtein(i["title"], shrinked[idx])]
+                          for i in result if i["year"] == self.video.year]
+                film = min(d, key=lambda x: x[1])
                 films.append(film)
-        film = min(films, key=d.get)[0]
+        film = min(films, key=lambda x: x[1])[0]
         return film
 
     def imdb_match(self):
         results = self.imdb_get_results(self.film_string())
         if len(results) != 0:                               # 1. has results
-            right_year = self.imdb_filter_year(results)       # 1.1 right year
+            right_year = self.filter_year(results)       # 1.1 right year
             if len(right_year) != 0:                             # 1.11 has year
                 for y in right_year:                               # a. get the film that match with the title
                     film = results[y]
@@ -222,40 +221,59 @@ class Media():
                         return film
                     else:                                          # b. if no match, compare akas
                         film = self.imdb_akas(film)
-                        return film
+                        if film is None:
+                            pass
+                        else:
+                            return film
             else:                                                 # 1.12 no year
                 scores = [[i, self.levenshtein(i["title"], self.video.title)] for i in results]
                 film = min(scores, key=lambda x: x[1])[0]
                 return film
-        else:
+        else:                                               # no results, shrink title
             results = [self.imdb_get_results(t + str(" ") + str(self.video.year)) for t in self.shrink_title()]
             return self.shrinked_result(results)
-
-    def imdb_info(self):
-        film = self.imdb_match()
-        IMDb().update(film)
-        return film.summary()
-
 
     def rt_rating(self):
         # set up rotten tomato api key
         rt = RT("qzqe4rz874rhxrkrjgrj95g3")
-        rt_result = rt.search(self.film_string())
-        film = [x for x in rt_result if x["year"] == self.video.year][0]
-        return film["ratings"]
+        rt_results = rt.search(self.film_string())
+        if len(rt_results) != 0:
+            film_l = [x for x in rt_results if self.video.year - 1 <= x["year"] <= self.video.year + 1
+                    and self.score_title(x["title"], self.video.title) <= 1.5]
+            if len(film_l) == 1:
+                film = film_l[0]
+                return film["ratings"]
+            elif len(film_l) > 1:
+                title_score = [self.score_title(x[0]["title"], self.video.title) for x in film_l]
+                film = film_l[title_score.index(min(title_score))][0]
+                return film["ratings"]
+            else:
+                pass
+
+        else:
+            results = [rt.search(t + str(" ") + str(self.video.year)) for t in self.shrink_title()]
+            film = self.shrinked_result(results)
+            return film["ratings"]
+
+    def imdb_info(self):
+        film = self.imdb_match()
+        if film == None:
+            print "Currently there is no information for this film"
+        else:
+            IMDb().update(film)
+            return film.summary()
+
+
+
 
     def format_info(self):
-        # rt_rating = self.rt_rating()
         print self.imdb_info()
-        # print "\nRotten Tomato scores: ",
-        # for key, value in rt_rating.iteritems():
-        #     print "%s: %s    " % (key, value),
-        # print
+        try:
+            rt_rating = self.rt_rating()
 
-
-# for result in results:
-#     if result != []:
-#         d = dict([[i, levenshtein(i["title"], m.video.title)] for i in result if i["year"] == m.video.year])
-#         print(d)
-#         film = min(d.items(), key=lambda x: x[1])
-#         films.append(film)
+            print "\nRotten Tomato scores: ",
+            for key, value in rt_rating.iteritems():
+                print "%s: %s    " % (key, value),
+            print
+        except Exception as e:
+            print "\nNo Rotten Tomato score available for the film"

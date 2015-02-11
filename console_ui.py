@@ -73,7 +73,7 @@ class Console_ui:
         while True:
             self.print_list_pwd()
             try:
-                choice = raw_input("Choose a media file to play: ")
+                choice = raw_input("\nChoose a media file to play: ")
             except KeyboardInterrupt:
                 print '\nKeyboard interrupt caught, exiting...'
                 sys.exit()
