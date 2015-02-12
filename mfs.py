@@ -62,6 +62,9 @@ class Item:
             return re.search(r'(\w)+', self.mime_type()).group()
         # return self.mime_type().split("/")[0]
 
+    def file_path(self):
+        return abspath(self.name)
+
     def is_av(self):
         if self.file_type() == "video":
             return True
@@ -122,7 +125,7 @@ class Media():
         if file.is_dir():
             raise ValueError("Item instance of type file required")
         self.file = file
-        self.video = subliminal.Video.fromname(file.name)
+        self.video = subliminal.Video.fromname(file.file_path())
 
     def trailer_url(self):
         if type(self.video) == subliminal.video.Movie:
@@ -233,47 +236,46 @@ class Media():
             results = [self.imdb_get_results(t + str(" ") + str(self.video.year)) for t in self.shrink_title()]
             return self.shrinked_result(results)
 
-    def rt_rating(self):
+    def rt_rating(self, f):
         # set up rotten tomato api key
         rt = RT("qzqe4rz874rhxrkrjgrj95g3")
-        rt_results = rt.search(self.film_string())
+        search = f["title"] + " " + str(f["year"])
+        rt_results = rt.search(search)
         if len(rt_results) != 0:
-            film_l = [x for x in rt_results if self.video.year - 1 <= x["year"] <= self.video.year + 1
-                    and self.score_title(x["title"], self.video.title) <= 1.5]
+            film_l = [x for x in rt_results if f["year"] - 2 <= x["year"] <= f["year"] + 2
+                    and self.score_title(x["title"], f["title"]) <= 1.5]
             if len(film_l) == 1:
                 film = film_l[0]
                 return film["ratings"]
             elif len(film_l) > 1:
-                title_score = [self.score_title(x[0]["title"], self.video.title) for x in film_l]
-                film = film_l[title_score.index(min(title_score))][0]
+                title_score = [self.score_title(x["title"], f["title"]) for x in film_l]
+                film = film_l[title_score.index(min(title_score))]
                 return film["ratings"]
             else:
                 pass
 
         else:
-            results = [rt.search(t + str(" ") + str(self.video.year)) for t in self.shrink_title()]
+            results = [rt.search(t + str(" ") + str(f["title"])) for t in self.shrink_title()]
             film = self.shrinked_result(results)
             return film["ratings"]
 
-    def imdb_info(self):
+
+    def format_info(self):
         film = self.imdb_match()
         if film == None:
             print "Currently there is no information for this film"
         else:
+            rt_rating = self.rt_rating(film)
             IMDb().update(film)
-            return film.summary()
+            print film.summary()
+            if rt_rating is None:
+                print "\nNo Rotten Tomato score available for the film"
+            else:
+                print "\nRotten Tomato scores: ",
+                for key, value in rt_rating.iteritems():
+                    print "%s: %s    " % (key, value),
+                print
 
 
 
 
-    def format_info(self):
-        print self.imdb_info()
-        try:
-            rt_rating = self.rt_rating()
-
-            print "\nRotten Tomato scores: ",
-            for key, value in rt_rating.iteritems():
-                print "%s: %s    " % (key, value),
-            print
-        except Exception as e:
-            print "\nNo Rotten Tomato score available for the film"

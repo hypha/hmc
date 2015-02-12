@@ -15,18 +15,16 @@ class Console_ui:
         self.update_pwd()
 
     def update_pwd(self):
-        self.pwdlist = sorted([i for i in self.d.list_dirs() if not i.name.startswith('.')], key=lambda x: x.name)
-        tmp = sorted([i for i in self.d.list_files() if not i.name.startswith('.')], key=lambda x: x.name)
-        self.pwdlist.extend(tmp)
-        # self.tmp.extend(pwdlist)
-        return self.pwdlist
+        self.pwdlist = []
+        dirs = sorted([i for i in self.d.list_dirs() if not i.name.startswith('.')], key=lambda x: x.name)
+        av_f = sorted([i for i in self.d.list_files() if not i.name.startswith('.') and i.is_av()], key=lambda x: x.name)
+        self.pwdlist.extend(dirs + av_f)
 
     def print_list_pwd(self):
         print '\n', "Listing of %s: " % self.d.path
         print "=" * (len(self.d.path)+13)
         for x in range(len(self.pwdlist)):
-            if self.pwdlist[x].is_dir() or self.pwdlist[x].is_av():
-                print "{:3d} : {}".format(x+1, self.pwdlist[x])
+            print "{:3d} : {}".format(x+1, self.pwdlist[x])
 
     def shuffle_op(self, c):
         if not re.match(r'shuffle', c, re.IGNORECASE) is None:
@@ -109,11 +107,11 @@ class Console_ui:
             elif not re.search(r"(info) ([1-9]+)", choice) is None:
                 info_choice = re.search(r"(info) ([1-9]+)", choice).group(2)
                 item = self.pwdlist[int(info_choice)-1]
-                try:
-                    print '\n\n'
-                    Media(item).format_info()
-                except Exception as e:
-                     print "Error in input: %s" % e
+                # try:
+                #     print '\n\n'
+                Media(item).format_info()
+                # except Exception as e:
+                #      print "Error in input: %s" % e
 
             else:
                 try:
