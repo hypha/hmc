@@ -188,10 +188,15 @@ class Media():
         year_l = [ind for ind, x in enumerate(r) if "year" in x.keys() and x["year"] == self.video.year]
         return year_l
 
-    def imdb_akas(self, f):
+    def akas(self, f):
         IMDb().update(f)
         if "akas" in f.keys():
-            akas = f["akas"]                     # and alternative titles
+            akas = f["akas"]
+        return akas
+
+    def imdb_akas(self, f):
+        akas = self.akas(f)
+        if akas is not None:
             if self.score_title(f["title"], self.video.title) <= 0.2:
                 return f
             elif not [j for j in [re.match(r'([a-zA-Z]+)::', i, re.U).group(1) for i in akas
@@ -236,28 +241,43 @@ class Media():
             results = [self.imdb_get_results(t + str(" ") + str(self.video.year)) for t in self.shrink_title()]
             return self.shrinked_result(results)
 
+    def rt_match(self, year, title, rt_results):
+        film_l = [x for x in rt_results if year - 2 <= x["year"] <= year + 2
+                  and self.score_title(x["title"], title) <= 1.5]
+        if len(film_l) == 1:
+            film = film_l[0]
+            return film["ratings"]
+        elif len(film_l) > 1:
+            title_score = [self.score_title(x["title"], title) for x in film_l]
+            film = film_l[title_score.index(min(title_score))]
+            return film["ratings"]
+        else:
+            pass
+
+    def rt_aka_match(self, f, rt):
+        imdb_akas = self.akas(f)
+        if imdb_akas is not None:
+            akas = [j for j in [re.match(r'([a-zA-Z]+)::', i, re.U).group(1) for i in imdb_akas
+                    if not re.match(r'([a-zA-Z]+)::', i, re.U) is None]]
+            for aka in akas:
+                search = aka + " " + str(f["year"])
+                rt_results = rt.search(search)
+                ratings = self.rt_match(f["year"], aka, rt_results)
+                return ratings
+
     def rt_rating(self, f):
         # set up rotten tomato api key
         rt = RT("qzqe4rz874rhxrkrjgrj95g3")
         search = f["title"] + " " + str(f["year"])
         rt_results = rt.search(search)
         if len(rt_results) != 0:
-            film_l = [x for x in rt_results if f["year"] - 2 <= x["year"] <= f["year"] + 2
-                    and self.score_title(x["title"], f["title"]) <= 1.5]
-            if len(film_l) == 1:
-                film = film_l[0]
-                return film["ratings"]
-            elif len(film_l) > 1:
-                title_score = [self.score_title(x["title"], f["title"]) for x in film_l]
-                film = film_l[title_score.index(min(title_score))]
-                return film["ratings"]
+            ratings = self.rt_match(f["year"], f["title"], rt_results)
+            if ratings is not None:
+                return ratings
             else:
-                pass
-
-        else:
-            results = [rt.search(t + str(" ") + str(f["title"])) for t in self.shrink_title()]
-            film = self.shrinked_result(results)
-            return film["ratings"]
+                return self.rt_aka_match(f, rt)
+        elif len(rt_results) == 0:
+            return self.rt_aka_match(f, rt)
 
 
     def format_info(self):
