@@ -107,11 +107,11 @@ class Console_ui:
             elif not re.search(r"(info) ([1-9]+)", choice) is None:
                 info_choice = re.search(r"(info) ([1-9]+)", choice).group(2)
                 item = self.pwdlist[int(info_choice)-1]
-                # try:
-                #     print '\n\n'
-                Media(item).format_info()
-                # except Exception as e:
-                #      print "Error in input: %s" % e
+                try:
+                    print '\n\n'
+                    Media(item).format_info()
+                except Exception as e:
+                     print "Error in input: %s" % e
 
             else:
                 try:
