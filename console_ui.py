@@ -75,6 +75,9 @@ class Console_ui:
             except KeyboardInterrupt:
                 print '\nKeyboard interrupt caught, exiting...'
                 sys.exit()
+            except EOFError:
+                print '\nKeyboard interrupt caught, exiting...'
+                sys.exit()
 
             if choice == "q":
                 print "exiting..."
