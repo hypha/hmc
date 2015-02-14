@@ -10,11 +10,14 @@ Dependency:
 
 3. Note: To install subliminal,  first git clone https://github.com/Diaoul/subliminal.git, then do "sudo python setup.py install" in the directory that it is installed.
 
-4. rottentomatoes python library. get the library by pip install rottentomatoes      
+4. rottentomatoes python library. Get the library by pip install rottentomatoes.      
+
+5. imdb python library. Get the library by pip install IMDbPY. (note, the version from repositary usually doesn't work well if at all).You might also need python-dev as a dependency for IMDbPY.  
+
 
 How to:
 Method 1: run python hmc.py from where the file is located in 
-Method 2: create a symlink to $PATH from where hmc.py is located in.
+Method 2: create a symlink to $PATH from where hmc.py is located in. And then just run hmc.py.
 
 Command:
 
@@ -36,4 +39,4 @@ Command:
 
 7. to play a range of trailers with shuffle, add shuffle before or after command 5.
 
-8. to get information of a film from rotten tomato, do info index.
+8. to get information of a film, do info index. Then you will see an imdb summary of the film alongside its rotten tomato scores.
