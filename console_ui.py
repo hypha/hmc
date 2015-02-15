@@ -7,9 +7,25 @@ import sys
 import re
 import random
 from mfs import Media
-
+import time
 
 class Console_ui:
+
+    item_list = r'(?<![-\d])(\d+-\d+|-\d+|\d+-|\d+)(?![-\d])'
+    # item_list = r'(%s)(,%s)*'
+
+    cmds = {
+        "quit":             r'q',
+        "cdup":             r'\.\.',
+        "trailer":          r'^\s*trailer\s+(?P<list>%s)' % item_list,
+        "info":             r'^\s*info\s+(?P<index>[1-9]+)',
+        "play":             r'^\s*(play\s+)?(?P<list>%s)$' % item_list,
+        "shuffle_play":     r'^\s*shuffle\s+play\s+(?P<list>%s)|^\s*shuffle\s+(?P<list1>%s)|^\s*(?P<list2>%s)\s+shuffle' %
+                            (item_list, item_list, item_list),
+        "shuffle_trailer":  r'shuffle\s+trailer\s+(?P<list>%s)' % item_list
+    }
+
+
     def __init__(self, d):
         self.d = d
         self.update_pwd()
@@ -48,8 +64,7 @@ class Console_ui:
 
     def multi_c(self, c, end=None):
         end = end or str(len(self.pwdlist)-1)
-        pattern = r'(?<![-\d])(\d+-\d+|-\d+|\d+-|\d+)(?![-\d])'
-        items = re.findall(pattern, c)
+        items = re.findall(self.item_list, c)
         alltracks = []
         for x in items:
             if x.startswith("-"):
@@ -64,86 +79,123 @@ class Console_ui:
                 alltracks.append(int(x))
         return alltracks
 
-    def event_loop(self, post=""):
+    def execute(self, cmd=None, match=None):
+        if cmd == "quit":
+            print "exiting..."
+            return "exit"
+
+        if cmd == "cdup":
+            self.d.cdup()
+            self.update_pwd()
+            return "ls"
+
+        if cmd == "trailer":
+            try:
+                self.play_list(match.group('list'), trailer=True)
+                return "ls"
+            except Exception as e:
+                print "Error in input: %s" % e
+                print "Please enter a correct index for the file."
+                return "prompt"
+                # return "ls"
+        if cmd == "play":
+            try:
+                self.play_list(match.group('list'))
+                return "prompt"
+            except Exception as e:
+                print "Error in input: %s" % e
+                print "Please enter a correct index for the file."
+                return "prompt"
+
+        if cmd == "shuffle_trailer":
+            try:
+                self.play_list(match.group('list'), shuffle=True, trailer=True)
+                return "prompt"
+            except Exception as e:
+                print "Error in input: %s" % e
+                print "Please enter a correct index for the file."
+                return "prompt"
+                # return "ls"
+
+        if cmd == "shuffle_play":
+            try:
+                items = match.groups()
+                item = [x for x in items if x is not None][0]
+                self.play_list(item, shuffle=True)
+                print item
+            except Exception as e:
+                print "Error in input: %s" % e
+                print "Please enter a correct index for the file."
+                return "prompt"
+                # return "ls"
+        if cmd == "info":
+            info_choice = match.group('index')
+            item = self.pwdlist[int(info_choice)-1]
+            try:
+                print '\n\n'
+                Media(item).format_info()
+            except Exception as e:
+                print "Error in input: %s" % e
+            return "prompt"
+
+    def get_input(self):
+        try:
+            choice = raw_input("\nChoose a media file to play: ")
+        except KeyboardInterrupt:
+            print '\nKeyboard interrupt caught, exiting...'
+            sys.exit()
+        except EOFError:
+            print '\nKeyboard interrupt caught, exiting...'
+            sys.exit()
+        return choice
+
+    def event_loop(self):
+
         # readline.parse_and_bind('tab: complete')
         readline.parse_and_bind('set editing-mode vi')
 
+        next_state = "ls"
         while True:
+            print "next-state: %s" % next_state
+            if next_state == "ls":
+                self.print_list_pwd()
+
+            if next_state == "exit":
+                sys.exit(0)
+
+            if next_state == "prompt":
+                print "press Enter to list files or directories"
+                next_state = "ls"
+            choice = self.get_input()
+
+            for cmd in self.cmds.keys():
+                m = re.match(self.cmds[cmd], choice)
+                if m is not None:
+                    try:
+                        next_state = self.execute(cmd, m)
+                    except NotImplementedError:
+                        print "Sorry, command '%s' is not yet implemented" % cmd
+
+    def play_list(self, selection, shuffle=False, repeat=False, trailer=False):
+        v_list = [self.pwdlist[int(x)-1] for x in self.multi_c(str(selection))]
+        # Where else can we better handle a directory?!
+        if len(v_list) == 1 and v_list[0].is_dir():
+            self.d.chdir(v_list[0])
+            self.update_pwd()
             self.print_list_pwd()
-            try:
-                choice = raw_input("\nChoose a media file to play: ")
-            except KeyboardInterrupt:
-                print '\nKeyboard interrupt caught, exiting...'
-                sys.exit()
-            except EOFError:
-                print '\nKeyboard interrupt caught, exiting...'
-                sys.exit()
 
-            if choice == "q":
-                print "exiting..."
-                break
-            elif choice == "..":
-                self.d.cdup()
-                self.update_pwd()
-            elif choice.isdigit():
-                try:
-                    item = self.pwdlist[int(choice)-1]
-                    print item
-                    if item.is_file():
-                        item.play()
-                    elif item.is_dir():
-                        self.d.chdir(item)
-                        self.update_pwd()
-
-                except Exception as e:
-                    print "Error in input: %s" % e
-
-            elif not re.search(r"(trailer) ([1-9]+)", choice) is None:
-                trailer_choice = re.search(r"(trailer) ([1-9]+)", choice).group(2)
-                item = self.pwdlist[int(trailer_choice)-1]
-                try:
-                    print "\n\n", "playing trailer: ", Media(item).video.title, Media(item).video.year
-                    Media(item).play_trailer()
-                except Exception as e:
-                    print "Error in input: %s" % e
-
-            elif not re.search(r"(info) ([1-9]+)", choice) is None:
-                info_choice = re.search(r"(info) ([1-9]+)", choice).group(2)
-                item = self.pwdlist[int(info_choice)-1]
-                try:
-                    print '\n\n'
-                    Media(item).format_info()
-                except Exception as e:
-                     print "Error in input: %s" % e
-
-            else:
-                try:
-                    self.play_list(choice)
-
-                except Exception as e:
-                    print "Error in input: %s" % e
-                    print "Please enter a correct index for the file."
-
-    def play_list(self, c, shuffle=False, repeat=False, trailer=False):
-        if not re.findall(r'shuffle', c, re.IGNORECASE) == []:
-            shuffle = True
-        if self.repeat_op(c):
-            repeat= "repeat" in self.option + ""
-        if not re.findall(r'trailer', c, re.IGNORECASE) == []:
-            trailer = True
-        selection = self.multi_c(c)
-        selection = list(set(selection))
-        v_list = [self.pwdlist[x-1] for x in selection]
         if shuffle:
             random.shuffle(v_list)
         n = 0
+
         while 0 <= n <= len(v_list)-1:
             v = v_list[n]
             try:
                 if trailer:
-                    p = Media(v).play_trailer()
+                    Media(v).play_trailer()
                 else:
-                    p = v.play()
+                    if v.is_file():
+                        v.play()
 
             except KeyboardInterrupt:
                 break

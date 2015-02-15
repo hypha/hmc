@@ -212,7 +212,7 @@ class Media():
         for idx, result in enumerate(r):
             if len(result) != 0:
                 d = [[i, self.levenshtein(i["title"], shrinked[idx])]
-                          for i in result if i["year"] == self.video.year]
+                     for i in result if i["year"] == self.video.year]
                 film = min(d, key=lambda x: x[1])
                 films.append(film)
         film = min(films, key=lambda x: x[1])[0]
@@ -278,7 +278,6 @@ class Media():
                 return self.rt_aka_match(f, rt)
         elif len(rt_results) == 0:
             return self.rt_aka_match(f, rt)
-
 
     def format_info(self):
         film = self.imdb_match()
