@@ -23,20 +23,20 @@ Command:
 
 1. ".." go to previous directory
 
-2. chosse an index to play corresponding audio/video file, e.g. simply type 4 to play num 4 in the list
+2. type in "play" followed by an index to play corresponding audio/video file. "play is implied if one directly types in an index, e.g. simply type 4 to play num 4 in the list; 
 
 3. if the file(s) is a film, use trailer index to play the trailer of the film, e.g. trailer 4
 
-4. play a range of media files by doing 
-   1,4,5 to play file 1,4,5; 
+4. play a range of media files by doing (play):
+   1,4,5 to play file 1,4,5;
    or 1-5 to play from file 1 to 5; 
-   or 1- to play from file 1 to the end
+   or 1- to play from file 1 to the end 
    or 5- to play from 1 to 5 in reverse
 
-5. use shuffle (range) or (range) shuffle to play in random order
+5. use shuffle range-of-index to play in random order
 
-6. to play a range of trailers of films, use trailer(range) or (range)trailer
+6. to play a range of trailers of films, use trailer range-of-index
 
-7. to play a range of trailers with shuffle, add shuffle before or after command 5.
+7. to play a range of trailers with shuffle, add shuffle before command 6.
 
 8. to get information of a film, do info index. Then you will see an imdb summary of the film alongside its rotten tomato scores.
