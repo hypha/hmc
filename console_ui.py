@@ -1,3 +1,4 @@
+__author__ = 'raquel'
 #!/usr/bin/python
 
 __author__ = 'raquel'
@@ -9,22 +10,20 @@ import random
 from mfs import Media
 import time
 
+
 class Console_ui:
 
     item_list = r'(?<![-\d])(\d+-\d+|-\d+|\d+-|\d+)(?![-\d])'
-    # item_list = r'(%s)(,%s)*'
 
     cmds = {
         "quit":             r'q',
         "cdup":             r'\.\.',
-        "trailer":          r'^\s*trailer\s+(?P<list>%s)' % item_list,
+        "trailer":          r'^\s*trailer\s+',
         "info":             r'^\s*info\s+(?P<index>[1-9]+)',
-        "play":             r'^\s*(play\s+)?(?P<list>%s)$' % item_list,
-        "shuffle_play":     r'^\s*shuffle\s+play\s+(?P<list>%s)|^\s*shuffle\s+(?P<list1>%s)|^\s*(?P<list2>%s)\s+shuffle' %
-                            (item_list, item_list, item_list),
-        "shuffle_trailer":  r'shuffle\s+trailer\s+(?P<list>%s)' % item_list
+        "play":             r'^\s*(play\s+)?[1-9]+',
+        "shuffle_play":     r'^\s*shuffle\s+play\s+|^\s*shuffle\s+|^\s*\s+shuffle',
+        "shuffle_trailer":  r'shuffle\s+trailer\s+'
     }
-
 
     def __init__(self, d):
         self.d = d
@@ -42,13 +41,6 @@ class Console_ui:
         for x in range(len(self.pwdlist)):
             print "{:3d} : {}".format(x+1, self.pwdlist[x])
 
-    def shuffle_op(self, c):
-        if not re.match(r'shuffle', c, re.IGNORECASE) is None:
-            return self.option == "shuffle"
-
-    def repeat_op(self, c):
-        if not re.match(r'repeat', c, re.IGNORECASE) is None:
-            return self.option == "repeat"
 
     def _bi_range(self, start, end):
         """
@@ -63,7 +55,7 @@ class Console_ui:
             return range(start, end + 1)
 
     def multi_c(self, c, end=None):
-        end = end or str(len(self.pwdlist)-1)
+        end = end or str(len(self.pwdlist))
         items = re.findall(self.item_list, c)
         alltracks = []
         for x in items:
@@ -79,7 +71,8 @@ class Console_ui:
                 alltracks.append(int(x))
         return alltracks
 
-    def execute(self, cmd=None, match=None):
+    def execute(self, cmd=None, match=None, choice=None):
+
         if cmd == "quit":
             print "exiting..."
             return "exit"
@@ -91,17 +84,17 @@ class Console_ui:
 
         if cmd == "trailer":
             try:
-                self.play_list(match.group('list'), trailer=True)
+                self.play_list(choice, trailer=True)
                 return "ls"
             except Exception as e:
                 print "Error in input: %s" % e
                 print "Please enter a correct index for the file."
                 return "prompt"
-                # return "ls"
+
         if cmd == "play":
             try:
-                self.play_list(match.group('list'))
-                return "prompt"
+                self.play_list(choice)
+                return "ls"
             except Exception as e:
                 print "Error in input: %s" % e
                 print "Please enter a correct index for the file."
@@ -109,31 +102,29 @@ class Console_ui:
 
         if cmd == "shuffle_trailer":
             try:
-                self.play_list(match.group('list'), shuffle=True, trailer=True)
-                return "prompt"
+                self.play_list(choice, shuffle=True, trailer=True)
+                return "ls"
             except Exception as e:
                 print "Error in input: %s" % e
                 print "Please enter a correct index for the file."
                 return "prompt"
-                # return "ls"
 
         if cmd == "shuffle_play":
             try:
-                items = match.groups()
-                item = [x for x in items if x is not None][0]
-                self.play_list(item, shuffle=True)
-                print item
+                self.play_list(choice, shuffle=True)
+                return "ls"
             except Exception as e:
                 print "Error in input: %s" % e
                 print "Please enter a correct index for the file."
                 return "prompt"
-                # return "ls"
+
         if cmd == "info":
             info_choice = match.group('index')
             item = self.pwdlist[int(info_choice)-1]
             try:
                 print '\n\n'
                 Media(item).format_info()
+                return "prompt"
             except Exception as e:
                 print "Error in input: %s" % e
             return "prompt"
@@ -150,13 +141,12 @@ class Console_ui:
         return choice
 
     def event_loop(self):
-
         # readline.parse_and_bind('tab: complete')
         readline.parse_and_bind('set editing-mode vi')
 
         next_state = "ls"
         while True:
-            print "next-state: %s" % next_state
+            # print "next-state: %s" % next_state
             if next_state == "ls":
                 self.print_list_pwd()
 
@@ -167,12 +157,14 @@ class Console_ui:
                 print "press Enter to list files or directories"
                 next_state = "ls"
             choice = self.get_input()
+            play_items = self.multi_c(choice)
 
             for cmd in self.cmds.keys():
                 m = re.match(self.cmds[cmd], choice)
                 if m is not None:
                     try:
-                        next_state = self.execute(cmd, m)
+                        next_state = self.execute(cmd, m, choice=play_items)
+
                     except NotImplementedError:
                         print "Sorry, command '%s' is not yet implemented" % cmd
 
@@ -182,7 +174,6 @@ class Console_ui:
         if len(v_list) == 1 and v_list[0].is_dir():
             self.d.chdir(v_list[0])
             self.update_pwd()
-            self.print_list_pwd()
 
         if shuffle:
             random.shuffle(v_list)

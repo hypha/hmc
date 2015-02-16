@@ -100,7 +100,6 @@ class Directory(object):
 
     def list_files(self):
         return self.files[::]
-        # return {i: files[i-1] for i in range(1, len(files)+1)}
 
     def prevdir(self):
         return abspath(join(self.path, pardir))
