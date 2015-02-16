@@ -13,14 +13,14 @@ import time
 
 class Console_ui:
 
-    item_list = r'(?<![-\d])(\d+-\d+|-\d+|\d+-|\d+)(?![-\d])'
+    item_list = r'(?<![-\d])(\d+-\d+|-\d+|\d+-|\d+|all)(?![-\d])'
 
     cmds = {
         "quit":             r'q',
         "cdup":             r'\.\.',
         "trailer":          r'^\s*trailer\s+',
-        "info":             r'^\s*info\s+(?P<index>[1-9]+)',
-        "play":             r'^\s*(play\s+)?[1-9]+',
+        "info":             r'^\s*info\s+(?P<index>[1-9]+)\s*',
+        "play":             r'^\s*(play\s+)?[1-9]+|all\s*',
         "shuffle_play":     r'^\s*shuffle\s+play\s+|^\s*shuffle\s+|^\s*\s+shuffle',
         "shuffle_trailer":  r'shuffle\s+trailer\s+'
     }
@@ -32,7 +32,8 @@ class Console_ui:
     def update_pwd(self):
         self.pwdlist = []
         dirs = sorted([i for i in self.d.list_dirs() if not i.name.startswith('.')], key=lambda x: x.name)
-        av_f = sorted([i for i in self.d.list_files() if not i.name.startswith('.') and i.is_av()], key=lambda x: x.name)
+        av_f = sorted([i for i in self.d.list_files() if not i.name.startswith('.')
+                       and i.is_av()], key=lambda x: x.name)
         self.pwdlist.extend(dirs + av_f)
 
     def print_list_pwd(self):
@@ -56,17 +57,25 @@ class Console_ui:
 
     def multi_c(self, c, end=None):
         end = end or str(len(self.pwdlist))
-        items = re.findall(self.item_list, c)
+        start = [x for x in self.pwdlist if x.is_av()][0]
+
+        items = re.findall(self.item_list, c, re.IGNORECASE)
         alltracks = []
         for x in items:
+            if x.lower() == "all":
+                x = str(self.pwdlist.index(start) + 1) + "-"
+
             if x.startswith("-"):
                 x = "1" + x
+
             elif x.endswith("-"):
                 x = x + end
+
             if "-" in x:
                 nrange = x.split("-")
                 startend = map(int, nrange)
                 alltracks += self._bi_range(*startend)
+
             else:
                 alltracks.append(int(x))
         return alltracks
@@ -191,11 +200,3 @@ class Console_ui:
             except KeyboardInterrupt:
                 break
             n += 1
-
-    # def play_all(self, c=None):
-    #     if all(item.is_file() for item in self.pwdlist):
-    #         if not re.match(r'shuffle', c, re.IGNORECASE) is None:
-    #             random.shuffle(self.pwdlist)
-    #             self.play_range(c)
-    #         if not re.match(r'all', c, re.IGNORECASE) is None:
-    #             self.play_range(c)
