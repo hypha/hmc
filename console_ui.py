@@ -53,12 +53,12 @@ class Console_ui:
 
     def multi_c(self, c, end=None):
         end = end or str(len(self.pwdlist))
-        start = [x for x in self.pwdlist if x.is_av()][0]
 
         items = re.findall(self.item_list, c, re.IGNORECASE)
         alltracks = []
         for x in items:
             if x.lower() == "all":
+                start = [x for x in self.pwdlist if x.is_av()][0]
                 x = str(self.pwdlist.index(start) + 1) + "-"
 
             if x.startswith("-"):
