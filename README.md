@@ -40,32 +40,50 @@ Method 1: From where the file hmc.py is located in, run:
 	
 	python hmc.py
 
-Method 2: create a symlink from hmc.py to any of $PATH (to check, do "echo $PATH),e.g. "ln -s ~/hmc/hmc.py /usr/local/bin". Then run "hmc.py" from any directory.
+Method 2: create a symlink from hmc.py to any of $PATH (to check, do "echo $PATH),e.g. 
+	
+	ln -s ~/hmc/hmc.py /usr/local/bin
+
+Then run "hmc.py" from any directory.
 
 
 
-Command:
+Command
 
-1. ".." go to previous directory
+1.to go to previous directory, type: ..
 
-2. type in "play" followed by an index to play corresponding audio/video file. "play is implied if one directly types in an index, e.g. simply type 4 to play num 4 in the list; 
+2.to go to a listed directory, type in its corresponding number
 
-3. if the file(s) is a film, use trailer index to play the trailer of the film, e.g. trailer 4
+3.to play media file No. 5, enter
 
-4. play a range of media files by doing (play):
-   1,4,5 to play file 1,4,5;
-   or 1-5 to play from file 1 to 5; 
-   or 1- to play from file 1 to the end 
-   or 5- to play from 1 to 5 in reverse
+	play 4 ; or 4
 
-5. use shuffle range-of-index to play in random order
+(play is implied if one directly types in an index of a media file
 
-6. to play a range of trailers of films, use trailer range-of-index
+4.if media file No.4 is a film, play the trailer of the film by entering
+	
+	trailer 4
 
-7. to play a range of trailers with shuffle, add shuffle before command 6
+5.play a range of media files by doing (play):
+   
+	1,4,5 to play file 1,4,5
+   
+	1-5 to play from file 1 to 5; 
+   	
+	1- to play from file 1 to the end 
 
-8. to play all media files, type "play all" or simply "all". Add "shuffle" before this to play in random order
+	5- to play from 1 to 5 in reverse
+	
+	all to play all media files in the directory
 
-9. to play all trailers of films, type in '(play) trailer all"; add "shuffle" before to play in random order
+6.add "shuffle" in front of command 5 to play a range of files in random mode
 
-10. to get information of a film, do info index. Then you will see an imdb summary of the film alongside its rotten tomato scores.
+7.add "trailer" in front of command 5 to play a range of trailers of films
+
+8.add "shuffle trailer" in front of command 5 to trailers of films in random order
+
+9.to get information of film 3, do 
+	
+	info 3
+
+Then you will see an imdb summary of the film alongside its rotten tomato scores.
