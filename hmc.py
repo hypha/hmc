@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 __author__ = 'raquel'
-__version__ = '0.1'
+__version__ = '1.0'
 
 from mfs import Browser
 from console_ui import Console_ui

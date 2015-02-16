@@ -1,14 +1,10 @@
 __author__ = 'raquel'
-#!/usr/bin/python
-
-__author__ = 'raquel'
-__version__ = '0.1'
+__version__ = '1.0'
 import readline
 import sys
 import re
 import random
 from mfs import Media
-import time
 
 
 class Console_ui:
