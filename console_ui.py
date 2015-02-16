@@ -21,7 +21,7 @@ class Console_ui:
         "trailer":          r'^\s*trailer\s+',
         "info":             r'^\s*info\s+(?P<index>[1-9]+)\s*',
         "play":             r'^\s*(play\s+)?[1-9]+|all\s*',
-        "shuffle_play":     r'^\s*shuffle\s+play\s+|^\s*shuffle\s+|^\s*\s+shuffle',
+        "shuffle_play":     r'^\s*shuffle\s+play\s+|^\s*shuffle\s+([1-9]+|all|-)|^\s*\s+shuffle',
         "shuffle_trailer":  r'shuffle\s+trailer\s+'
     }
 
