@@ -14,7 +14,7 @@ Dependency:
 
 Install by typing "sudo install pip mpv python-dev"
 
-	Note:  mpv (only tested with latest version built from https://github.com/mpv-player/mpv-build; earlier version without eabling ffmpeg options might result in some urls not playing properly; earlier versions should exist in the repositoriy of recent versions of Linux)
+  Note:  mpv (only tested with latest version built from https://github.com/mpv-player/mpv-build; earlier version without eabling ffmpeg options might result in some urls not playing properly; earlier versions should exist in the repositoriy of recent versions of Linux)
 
 
 2.Python libraries: IMDbPY, rottentomatoes, subliminal.
