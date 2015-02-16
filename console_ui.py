@@ -154,13 +154,13 @@ class Console_ui:
                 sys.exit(0)
 
             if next_state == "prompt":
-                print "press Enter to list files or directories"
+                print "\nPress Enter to list files or directories"
                 next_state = "ls"
             choice = self.get_input()
             play_items = self.multi_c(choice)
 
             for cmd in self.cmds.keys():
-                m = re.match(self.cmds[cmd], choice)
+                m = re.match(self.cmds[cmd], choice, re.IGNORECASE)
                 if m is not None:
                     try:
                         next_state = self.execute(cmd, m, choice=play_items)
