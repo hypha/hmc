@@ -37,6 +37,10 @@ Command:
 
 6. to play a range of trailers of films, use trailer range-of-index
 
-7. to play a range of trailers with shuffle, add shuffle before command 6.
+7. to play a range of trailers with shuffle, add shuffle before command 6
 
-8. to get information of a film, do info index. Then you will see an imdb summary of the film alongside its rotten tomato scores.
+8. to play all media files, type "play all" or simply "all". Add "shuffle" before this to play in random order
+
+9. to play all trailers of films, type in '(play) trailer all"; add "shuffle" before to play in random order
+
+10. to get information of a film, do info index. Then you will see an imdb summary of the film alongside its rotten tomato scores.
