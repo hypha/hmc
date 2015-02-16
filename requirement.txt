@@ -1,0 +1,4 @@
+IMDbPY==5.0
+rottentomatoes==2.1
+#subliminal==0.8.0.dev0:
+https://github.com/Diaoul/subliminal/archive/master.zip
