@@ -2,22 +2,37 @@
 Hypha's media centre
 
 Installation:
-run "git clone https://github.com/hypha/hmc.git" in the terminal. (Assuming you have git, otherwise, sudo apt-get install git)
+
+Run "git clone https://github.com/hypha/hmc.git" in the terminal. (Assuming you have git, otherwise, sudo apt-get install git)
+
+
+
 
 Dependency:
-1. System dependencies: pip, mpv, python-dev.
+
+1.System dependencies: pip, mpv, python-dev.
+
 Install by typing "sudo install pip mpv python-dev"
 
 Note:  mpv (only tested with latest version built from https://github.com/mpv-player/mpv-build; earlier version without eabling ffmpeg options might result in some urls not playing properly; earlier versions should exist in the repositoriy of recent versions of Linux)
 
+
 2. Python libraries: IMDbPY, rottentomatoes, subliminal.
+
 2.1. "cd hmc/" to go inside the directory where you cloned the files. 
+
 2.2. Install python dependencies by typing "sudo pip install -r requirement.txt" 
 
 
-How to:
+
+
+How to run:
+
 Method 1: run "python hmc.py" from where the file hmc.py is located in.
+
 Method 2: create a symlink from hmc.py to any of $PATH (to check, do "echo $PATH),e.g. "ln -s ~/hmc/hmc.py /usr/local/bin". Then run "hmc.py" from any directory.
+
+
 
 Command:
 
