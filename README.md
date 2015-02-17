@@ -40,9 +40,9 @@ Method 1: From where the file hmc.py is located in, run:
 	
 	python hmc.py
 
-Method 2: create a symlink from hmc.py to any of $PATH (to check, do "echo $PATH),e.g. 
+Method 2: create a symlink from hmc.py to any of $PATH (to check, do "echo $PATH"),e.g. 
 	
-	ln -s ~/hmc/hmc.py /usr/local/bin
+	ln -s ~/hmc/hmc.py /usr/local/bin/
 
 Then run "hmc.py" from any directory.
 
