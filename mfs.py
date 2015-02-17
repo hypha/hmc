@@ -177,7 +177,7 @@ class Media():
         return previous_row[-1]
 
     def score_title(self, imdb_title, title):
-        return float(self.levenshtein(imdb_title, self.video.title)) / len(title)
+        return float(self.levenshtein(imdb_title, title)) / len(title)
 
     def imdb_get_results(self, s):
         imdb = IMDb()
@@ -191,7 +191,7 @@ class Media():
         IMDb().update(f)
         if "akas" in f.keys():
             akas = f["akas"]
-        return akas
+            return akas
 
     def imdb_akas(self, f):
         akas = self.akas(f)

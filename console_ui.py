@@ -125,8 +125,8 @@ class Console_ui:
 
         if cmd == "info":
             info_choice = match.group('index')
-            item = self.pwdlist[int(info_choice)-1]
             try:
+                item = self.pwdlist[int(info_choice)-1]
                 print '\n\n'
                 Media(item).format_info()
                 return "prompt"
