@@ -21,7 +21,7 @@ Install by typing
   Note:  mpv (only tested with latest version built from https://github.com/mpv-player/mpv-build; earlier version without eabling ffmpeg options might result in some urls not playing properly; earlier versions should exist in the repositoriy of recent versions of Linux)
 
 
-2.Python libraries: IMDbPY, rottentomatoes, subliminal.
+2.Python libraries: IMDbPY, rottentomatoes, subliminal, tabulate, pytvdbapi
 
    2.1.Go inside the directory where you cloned the files:
     
@@ -82,7 +82,7 @@ Command
 
 8.add "shuffle trailer" in front of command 5 to trailers of films in random order
 
-9.to get information of film 3, do 
+9.to get information of film or Series No.3, do 
 	
 	info 3
 
