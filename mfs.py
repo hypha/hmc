@@ -13,9 +13,9 @@ import urllib
 import json
 from rottentomatoes import RT
 from imdb import IMDb
-
-
-
+from collections import OrderedDict
+from pytvdbapi import api
+from tabulate import tabulate
 uni, byt, xinput = str, bytes, input
 
 
@@ -176,8 +176,8 @@ class Media():
             previous_row = current_row
         return previous_row[-1]
 
-    def score_title(self, imdb_title, title):
-        return float(self.levenshtein(imdb_title, title)) / len(title)
+    def score_title(self, match_title, title):
+        return float(self.levenshtein(match_title, title)) / len(title)
 
     def imdb_get_results(self, s):
         imdb = IMDb()
@@ -294,6 +294,71 @@ class Media():
                     print "%s: %s    " % (key, value),
                 print
 
+    def init_tvdb(self):
+        return api.TVDB("B1F9E70454EBEB3C")
+
+    def tvdb(self):
+        db = self.init_tvdb()
+        search = db.search(self.video.series, "en")
+        if len(search) == 0:
+            return search
+        else:
+            if len(search) == 1:
+                show = search[0]
+            elif len(search) > 1:
+                score = [self.score_title(x.SeriesName, self.video.series) for x in search]
+                m = min(score)
+                min_index = [i for i, j in enumerate(score) if j == m]
+                if len(min_index) == 1:
+                    show = search[min_index[0]]
+                else:
+                    for idx, x in enumerate(search):
+                        print idx+1, ": ", x
+                    show = search[int(raw_input()) - 1]
+            return show
+
+    def format_tvdb(self):
+        show = self.tvdb()
+        if len(show) == 0:
+            print "No information on the show or film"
+        else:
+            show.update()
+            # show_imdb = self.imdb_get_results(show.IMDB_ID)[0]
+            # IMDb().update(show_imdb)
+            e = show[self.video.season][self.video.episode]
+
+            print "\nSeries"
+            print "=" * (len("Series"))
 
 
+            dict1 = OrderedDict([("Title", show.SeriesName),
+                                 ("Air Time", "%s - %s;  %s (First aired)"
+                                  % (show.Airs_DayOfWeek, show.Airs_Time, show.FirstAired)),
+                                 ("Genres", ', '.join(str(p) for p in show.Genre)),
+                                 ("Runtime", str(show.Runtime) + " mins"),
+                                 ("Network", show.Network),
+                                 ("Show Rating", "TVDB - %s (%s votes) " % (show.Rating, show.RatingCount)),
+                                 ("Overview", show.Overview)])
+
+            dict2 = OrderedDict([(e.season, " Epi %s - %s" % (e.EpisodeNumber, e.EpisodeName)),
+                                 ("Episode Air Date", e.FirstAired),
+                                 ("Episode Rating", e.Rating),
+                                 ("Episode Plot", e.Overview)])
+            # for key, value in dict1.iteritems():
+            #     # print key, ":", value
+            #     print"{:<13}:  {}".format(key, value)
+            # print '\n'
+            #
+            # for key, value in dict2.iteritems():
+            #     # print key, ":", value
+            #     print"{:<17}:  {}".format(key, value)
+            print tabulate(dict1.items(), stralign="left", tablefmt="plain")
+            print "\n"
+            print tabulate(dict2.items(), stralign="left", tablefmt="plain")
+
+    def info(self):
+        if type(self.video) == subliminal.video.Movie:
+            return self.format_info()
+        if type(self.video) == subliminal.video.Episode:
+            return self.format_tvdb()
 

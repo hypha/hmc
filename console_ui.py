@@ -128,7 +128,7 @@ class Console_ui:
             try:
                 item = self.pwdlist[int(info_choice)-1]
                 print '\n\n'
-                Media(item).format_info()
+                Media(item).info()
                 return "prompt"
             except Exception as e:
                 print "Error in input: %s" % e
