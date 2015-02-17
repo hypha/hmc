@@ -12,7 +12,7 @@ In the terminal run (Assuming you have git, otherwise, sudo apt-get install git)
 
 Dependency:
 
-1.System dependencies: pip, mpv, python-dev.
+1.System dependencies: python-pip, mpv, python-dev.
 
 Install by typing 
 
