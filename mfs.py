@@ -121,8 +121,8 @@ class Browser(Directory):
 
 class Media():
     def __init__(self, file):
-        if file.is_dir():
-            raise ValueError("Item instance of type file required")
+        # if file.is_dir():
+        #     raise ValueError("Item instance of type file required")
         self.file = file
         self.video = subliminal.Video.fromname(file.file_path())
 
@@ -143,13 +143,17 @@ class Media():
             print "Error in input: %s" % e
             print "Please select a film file for trailer"
 
-    def film_string(self):
-        return self.video.title + str(" ") + str(self.video.year)
+    def film_string(self, t, y):
+        if y is not None:
+            return t + str(" ") + str(y)
+        else:
+            return t
 
-    def shrink_title(self):
+
+    def shrink_title(self, t):
         c = 1
         titles = []
-        title = re.findall(r'\w+', self.video.title)
+        title = re.findall(r'\w+', t)
         while c < len(title):
             title = title[0: len(title) - c]
             titles.append(" ".join(title))
@@ -206,7 +210,7 @@ class Media():
                 print "Currently there is no information for this film"
 
     def shrinked_result(self, r):
-        shrinked = [t for t in self.shrink_title()]
+        shrinked = [t for t in self.shrink_title(self.video.title)]
         films = []
         for idx, result in enumerate(r):
             if len(result) != 0:
@@ -218,15 +222,18 @@ class Media():
         return film
 
     def imdb_match(self):
-        results = self.imdb_get_results(self.film_string())
+        results = self.imdb_get_results(self.film_string(self.video.title, self.video.year))
         if len(results) != 0:                               # 1. has results
             right_year = self.filter_year(results)       # 1.1 right year
             if len(right_year) != 0:                             # 1.11 has year
-                for y in right_year:                               # a. get the film that match with the title
-                    film = results[y]
-                    if self.score_title(film["title"], self.video.title) <= 0.2:
-                        return film
-                    else:                                          # b. if no match, compare akas
+                films = [results[y] for y in right_year if          # a. get the film that match with the title
+                         self.score_title(results[y]["title"], self.video.title) <= 0.2]
+                if len(films) != 0:
+                    print "yesyesyes"
+                    return films[0]
+                else:                                               # b. if no match, compare akas
+                    for y in right_year:
+                        film = results[y]
                         film = self.imdb_akas(film)
                         if film is None:
                             pass
@@ -237,7 +244,7 @@ class Media():
                 film = min(scores, key=lambda x: x[1])[0]
                 return film
         else:                                               # no results, shrink title
-            results = [self.imdb_get_results(t + str(" ") + str(self.video.year)) for t in self.shrink_title()]
+            results = [self.imdb_get_results(self.film_string(t, self.video.year)) for t in self.shrink_title(self.video.title)]
             return self.shrinked_result(results)
 
     def rt_match(self, year, title, rt_results):
@@ -267,7 +274,14 @@ class Media():
     def rt_rating(self, f):
         # set up rotten tomato api key
         rt = RT("qzqe4rz874rhxrkrjgrj95g3")
-        search = f["title"] + " " + str(f["year"])
+        if "title" in f.keys():
+            t = f["title"]
+        if "year" in f.keys():
+            y = f["year"]
+        search = self.film_string(t, y)
+        if UnicodeEncodeError:
+            search = search.encode("ascii", "ignore")
+
         rt_results = rt.search(search)
         if len(rt_results) != 0:
             ratings = self.rt_match(f["year"], f["title"], rt_results)
@@ -276,7 +290,11 @@ class Media():
             else:
                 return self.rt_aka_match(f, rt)
         elif len(rt_results) == 0:
-            return self.rt_aka_match(f, rt)
+            if self.rt_aka_match(f, rt) is not None:
+                return self.rt_aka_match(f, rt)
+            else:
+                pass
+
 
     def format_info(self):
         film = self.imdb_match()
@@ -285,7 +303,7 @@ class Media():
         else:
             rt_rating = self.rt_rating(film)
             IMDb().update(film)
-            print film.summary()
+            print film.summary().encode('utf8')
             if rt_rating is None:
                 print "\nNo Rotten Tomato score available for the film"
             else:
