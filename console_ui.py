@@ -5,7 +5,7 @@ import sys
 import re
 import random
 from mfs import Media
-
+import os
 
 class Console_ui:
 
@@ -26,6 +26,28 @@ class Console_ui:
     def __init__(self, d):
         self.d = d
         self.update_pwd()
+
+    def history_log(self):
+        home = os.path.expanduser("~/")
+        config = os.path.join(home, ".config/")
+        if not os.path.exists(config):
+            os.makedirs(config)
+        hmc = os.path.join(config, "hmc/")
+        if not os.path.exists(hmc):
+            os.makedirs(hmc)
+        history_file = os.path.join(hmc, "cmd_history")
+        return history_file
+
+    def init_readline(self):
+        # readline.parse_and_bind('tab: complete')
+        readline.parse_and_bind('set editing-mode vi')
+        readline.set_history_length(2000)
+        history_file = self.history_log()
+        if os.path.exists(history_file):
+            readline.read_history_file(history_file)
+
+
+
 
     def update_pwd(self):
         self.pwdlist = []
@@ -157,8 +179,8 @@ class Console_ui:
         return choice
 
     def event_loop(self):
-        # readline.parse_and_bind('tab: complete')
-        readline.parse_and_bind('set editing-mode vi')
+
+        self.init_readline()
 
         next_state = "ls"
         while True:
@@ -183,6 +205,7 @@ class Console_ui:
 
                     except NotImplementedError:
                         print "Sorry, command '%s' is not yet implemented" % cmd
+            readline.write_history_file(self.history_log())
 
     def play_list(self, selection, shuffle=False, repeat=False, trailer=False, sub=False):
         v_list = [self.pwdlist[int(x)-1] for x in self.multi_c(str(selection))]
