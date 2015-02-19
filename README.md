@@ -21,7 +21,7 @@ Install by typing
   Note:  mpv (only tested with latest version built from https://github.com/mpv-player/mpv-build; earlier version without eabling ffmpeg options might result in some urls not playing properly; earlier versions should exist in the repositoriy of recent versions of Linux)
 
 
-2.Python libraries: IMDbPY, rottentomatoes, guessit, tabulate, pytvdbapi
+2.Python libraries: IMDbPY, rottentomatoes, guessit, enzyme, babelfish, tabulate, pytvdbapi
 
    2.1.Go inside the directory where you cloned the files:
     
@@ -64,7 +64,11 @@ Command
 	
 	trailer 4
 
-5.play a range of media files by doing (play):
+5.to get the subtitle of film or show No. 4, do:
+
+       sub 4
+
+6.play a range of media files by doing (play):
    
 	1,4,5 to play file 1,4,5
    
@@ -76,13 +80,15 @@ Command
 	
 	all to play all media files in the directory
 
-6.add "shuffle" in front of command 5 to play a range of files in random mode
+7.add "sub" in front of command 6 to get the subtitles for a range of media files
 
-7.add "trailer" in front of command 5 to play a range of trailers of films
+8.add "shuffle" in front of command 6 to play a range of files in random mode
 
-8.add "shuffle trailer" in front of command 5 to trailers of films in random order
+9.add "trailer" in front of command 6 to play a range of trailers of films
 
-9.to get information of film or Series No.3, do 
+10.add "shuffle trailer" in front of command 6 to trailers of films in random order
+
+11.to get information of film or Series No.3, do 
 	
 	info 3
 

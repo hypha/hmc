@@ -8,7 +8,7 @@ import subprocess
 import re
 from mimetypes import MimeTypes
 # import magic
-# import subliminal
+import subliminal
 import urllib
 import json
 from rottentomatoes import RT
@@ -18,7 +18,7 @@ from pytvdbapi import api
 from tabulate import tabulate
 import guessit
 uni, byt, xinput = str, bytes, input
-
+from babelfish import Language
 
 def utf8_encode(x):
     return x.encode("utf8") if isinstance(x, uni) else x
@@ -402,3 +402,12 @@ class Media():
 
             return self.format_tvdb()
 
+
+    def subtitle(self):
+        videos = subliminal.scan_videos([self.file.file_path()], subtitles=True, embedded_subtitles=True)
+        p = subliminal.download_best_subtitles(videos, {Language("eng")})
+        if len(p) == 0:
+            print "No subtitle found"
+        else:
+            subliminal.save_subtitles(p)
+            print "Subtitle downloaded"

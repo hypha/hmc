@@ -5,7 +5,7 @@ import sys
 import re
 import random
 from mfs import Media
-
+import os
 
 class Console_ui:
 
@@ -18,12 +18,36 @@ class Console_ui:
         "info":             r'^\s*info\s+(?P<index>\d+)\s*',
         "play":             r'^\s*(play\s+)?(\d+|all)\s*',
         "shuffle_play":     r'^\s*shuffle\s+play\s+|^\s*shuffle\s+(\d+|all|-)|^\s*\s+shuffle',
-        "shuffle_trailer":  r'shuffle\s+trailer\s+'
+        "shuffle_trailer":  r'shuffle\s+trailer\s+',
+        "subtitle":              r'^\s*sub\s+',
+
     }
 
     def __init__(self, d):
         self.d = d
         self.update_pwd()
+
+    def history_log(self):
+        home = os.path.expanduser("~/")
+        config = os.path.join(home, ".config/")
+        if not os.path.exists(config):
+            os.makedirs(config)
+        hmc = os.path.join(config, "hmc/")
+        if not os.path.exists(hmc):
+            os.makedirs(hmc)
+        history_file = os.path.join(hmc, "cmd_history")
+        return history_file
+
+    def init_readline(self):
+        # readline.parse_and_bind('tab: complete')
+        readline.parse_and_bind('set editing-mode vi')
+        readline.set_history_length(2000)
+        history_file = self.history_log()
+        if os.path.exists(history_file):
+            readline.read_history_file(history_file)
+
+
+
 
     def update_pwd(self):
         self.pwdlist = []
@@ -96,6 +120,15 @@ class Console_ui:
                 print "Please enter a correct index for the file."
                 return "prompt"
 
+        if cmd == "subtitle":
+            try:
+                self.play_list(choice, sub=True )
+                return "prompt"
+            except Exception as e:
+                print "Error in input: %s" % e
+                print "Please enter a correct index for the file."
+                return "prompt"
+
         if cmd == "play":
             try:
                 self.play_list(choice)
@@ -146,8 +179,8 @@ class Console_ui:
         return choice
 
     def event_loop(self):
-        # readline.parse_and_bind('tab: complete')
-        readline.parse_and_bind('set editing-mode vi')
+
+        self.init_readline()
 
         next_state = "ls"
         while True:
@@ -172,8 +205,9 @@ class Console_ui:
 
                     except NotImplementedError:
                         print "Sorry, command '%s' is not yet implemented" % cmd
+            readline.write_history_file(self.history_log())
 
-    def play_list(self, selection, shuffle=False, repeat=False, trailer=False):
+    def play_list(self, selection, shuffle=False, repeat=False, trailer=False, sub=False):
         v_list = [self.pwdlist[int(x)-1] for x in self.multi_c(str(selection))]
         # Where else can we better handle a directory?!
         if len(v_list) == 1 and v_list[0].is_dir():
@@ -189,6 +223,8 @@ class Console_ui:
             try:
                 if trailer:
                     Media(v).play_trailer()
+                if sub:
+                    Media(v).subtitle()
                 else:
                     if v.is_file():
                         v.play()
