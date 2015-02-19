@@ -8,7 +8,7 @@ import subprocess
 import re
 from mimetypes import MimeTypes
 # import magic
-import subliminal
+# import subliminal
 import urllib
 import json
 from rottentomatoes import RT
@@ -16,6 +16,7 @@ from imdb import IMDb
 from collections import OrderedDict
 from pytvdbapi import api
 from tabulate import tabulate
+import guessit
 uni, byt, xinput = str, bytes, input
 
 
@@ -124,12 +125,34 @@ class Media():
         # if file.is_dir():
         #     raise ValueError("Item instance of type file required")
         self.file = file
-        self.video = subliminal.Video.fromname(file.file_path())
+        self.video = guessit.guess_file_info(file.file_path())
+
+
+    def video_title(self):
+        return self.video["title"]
+
+    def video_year(self):
+        if "year" in self.video.keys():
+            return self.video["year"]
+        else:
+            return ""
+
+    def video_series(self):
+        return self.video["series"]
+
+    def video_episode(self):
+        return self.video["episodeNumber"]
+
+    def video_season(self):
+        if "season" in self.video.keys():
+            return self.video["season"]
+        else:
+            return 1
 
     def trailer_url(self):
-        if type(self.video) == subliminal.video.Movie:
+        if self.video["type"] == "movie":
             url = "https://gdata.youtube.com/feeds/api/videos/?q={0}+{1}+trailer&alt=jsonc&v=2"
-            url = url.format(urllib.quote_plus(self.video.title), self.video.year)
+            url = url.format(urllib.quote_plus(self.video_title().encode("ascii", "ignore")), self.video_year())
             wdata = utf8_decode(urllib.urlopen(url).read())
             wdata = json.loads(wdata)
             return wdata['data']['items'][0]['player']['default']
@@ -188,7 +211,7 @@ class Media():
         return imdb.search_movie(s)
 
     def filter_year(self, r):
-        year_l = [ind for ind, x in enumerate(r) if "year" in x.keys() and x["year"] == self.video.year]
+        year_l = [ind for ind, x in enumerate(r) if "year" in x.keys() and x["year"] == self.video_year()]
         return year_l
 
     def akas(self, f):
@@ -200,36 +223,35 @@ class Media():
     def imdb_akas(self, f):
         akas = self.akas(f)
         if akas is not None:
-            if self.score_title(f["title"], self.video.title) <= 0.2:
+            if self.score_title(f["title"], self.video_title()) <= 0.2:
                 return f
             elif not [j for j in [re.match(r'([a-zA-Z]+)::', i, re.U).group(1) for i in akas
                       if not re.match(r'([a-zA-Z]+)::', i, re.U) is None]
-                      if self.score_title(j, self.video.title) <= 0.2] is []:
+                      if self.score_title(j, self.video_title()) <= 0.2] is []:
                 return f
             else:
                 print "Currently there is no information for this film"
 
     def shrinked_result(self, r):
-        shrinked = [t for t in self.shrink_title(self.video.title)]
+        shrinked = [t for t in self.shrink_title(self.video_title())]
         films = []
         for idx, result in enumerate(r):
             if len(result) != 0:
                 d = [[i, self.levenshtein(i["title"], shrinked[idx])]
-                     for i in result if i["year"] == self.video.year]
+                     for i in result if i["year"] == self.video_year()]
                 film = min(d, key=lambda x: x[1])
                 films.append(film)
         film = min(films, key=lambda x: x[1])[0]
         return film
 
     def imdb_match(self):
-        results = self.imdb_get_results(self.film_string(self.video.title, self.video.year))
+        results = self.imdb_get_results(self.film_string(self.video_title(), self.video_year()))
         if len(results) != 0:                               # 1. has results
             right_year = self.filter_year(results)       # 1.1 right year
             if len(right_year) != 0:                             # 1.11 has year
                 films = [results[y] for y in right_year if          # a. get the film that match with the title
-                         self.score_title(results[y]["title"], self.video.title) <= 0.2]
+                         self.score_title(results[y]["title"], self.video_title()) <= 0.2]
                 if len(films) != 0:
-                    print "yesyesyes"
                     return films[0]
                 else:                                               # b. if no match, compare akas
                     for y in right_year:
@@ -240,11 +262,12 @@ class Media():
                         else:
                             return film
             else:                                                 # 1.12 no year
-                scores = [[i, self.levenshtein(i["title"], self.video.title)] for i in results]
+                scores = [[i, self.levenshtein(i["title"], self.video_title())] for i in results]
                 film = min(scores, key=lambda x: x[1])[0]
                 return film
         else:                                               # no results, shrink title
-            results = [self.imdb_get_results(self.film_string(t, self.video.year)) for t in self.shrink_title(self.video.title)]
+            results = [self.imdb_get_results(self.film_string(t, self.video_year()))
+                       for t in self.shrink_title(self.video_title())]
             return self.shrinked_result(results)
 
     def rt_match(self, year, title, rt_results):
@@ -295,7 +318,6 @@ class Media():
             else:
                 pass
 
-
     def format_info(self):
         film = self.imdb_match()
         if film == None:
@@ -317,18 +339,17 @@ class Media():
 
     def tvdb(self):
         db = self.init_tvdb()
-        search = db.search(self.video.series, "en")
+        search = db.search(self.video_series(), "en")
         if len(search) == 0:
             return search
         else:
             if len(search) == 1:
                 show = search[0]
             elif len(search) > 1:
-                score = [self.score_title(x.SeriesName, self.video.series) for x in search]
-                m = min(score)
-                min_index = [i for i, j in enumerate(score) if j == m]
-                if len(min_index) == 1:
-                    show = search[min_index[0]]
+                shows = [x for x in search if self.score_title(x.SeriesName, self.video_series()) < 1.5]
+
+                if len(shows) == 1:
+                    show = shows[0]
                 else:
                     for idx, x in enumerate(search):
                         print idx+1, ": ", x
@@ -343,7 +364,7 @@ class Media():
             show.update()
             # show_imdb = self.imdb_get_results(show.IMDB_ID)[0]
             # IMDb().update(show_imdb)
-            e = show[self.video.season][self.video.episode]
+            e = show[self.video_season()][self.video_episode()]
 
             print "\nSeries"
             print "=" * (len("Series"))
@@ -375,8 +396,9 @@ class Media():
             print tabulate(dict2.items(), stralign="left", tablefmt="plain")
 
     def info(self):
-        if type(self.video) == subliminal.video.Movie:
+        if self.video["type"] == "movie":
             return self.format_info()
-        if type(self.video) == subliminal.video.Episode:
+        if self.video["type"] == "episode":
+
             return self.format_tvdb()
 
