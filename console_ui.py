@@ -18,7 +18,9 @@ class Console_ui:
         "info":             r'^\s*info\s+(?P<index>\d+)\s*',
         "play":             r'^\s*(play\s+)?(\d+|all)\s*',
         "shuffle_play":     r'^\s*shuffle\s+play\s+|^\s*shuffle\s+(\d+|all|-)|^\s*\s+shuffle',
-        "shuffle_trailer":  r'shuffle\s+trailer\s+'
+        "shuffle_trailer":  r'shuffle\s+trailer\s+',
+        "subtitle":              r'^\s*sub\s+',
+
     }
 
     def __init__(self, d):
@@ -91,6 +93,15 @@ class Console_ui:
             try:
                 self.play_list(choice, trailer=True)
                 return "ls"
+            except Exception as e:
+                print "Error in input: %s" % e
+                print "Please enter a correct index for the file."
+                return "prompt"
+
+        if cmd == "subtitle":
+            try:
+                self.play_list(choice, sub=True )
+                return "prompt"
             except Exception as e:
                 print "Error in input: %s" % e
                 print "Please enter a correct index for the file."
@@ -173,7 +184,7 @@ class Console_ui:
                     except NotImplementedError:
                         print "Sorry, command '%s' is not yet implemented" % cmd
 
-    def play_list(self, selection, shuffle=False, repeat=False, trailer=False):
+    def play_list(self, selection, shuffle=False, repeat=False, trailer=False, sub=False):
         v_list = [self.pwdlist[int(x)-1] for x in self.multi_c(str(selection))]
         # Where else can we better handle a directory?!
         if len(v_list) == 1 and v_list[0].is_dir():
@@ -189,6 +200,8 @@ class Console_ui:
             try:
                 if trailer:
                     Media(v).play_trailer()
+                if sub:
+                    Media(v).subtitle()
                 else:
                     if v.is_file():
                         v.play()
