@@ -168,7 +168,7 @@ class Media():
 
     def film_string(self, t, y):
         if y is not None:
-            return t + str(" ") + str(y)
+            return t + str("+") + str(y)
         else:
             return t
 
@@ -289,7 +289,7 @@ class Media():
             akas = [j for j in [re.match(r'([a-zA-Z]+)::', i, re.U).group(1) for i in imdb_akas
                     if not re.match(r'([a-zA-Z]+)::', i, re.U) is None]]
             for aka in akas:
-                search = aka + " " + str(f["year"])
+                search = self.film_string(aka, f["year"])
                 rt_results = rt.search(search)
                 ratings = self.rt_match(f["year"], aka, rt_results)
                 return ratings
