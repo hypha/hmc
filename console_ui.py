@@ -46,9 +46,6 @@ class Console_ui:
         if os.path.exists(history_file):
             readline.read_history_file(history_file)
 
-
-
-
     def update_pwd(self):
         self.pwdlist = []
         dirs = sorted([i for i in self.d.list_dirs() if not i.name.startswith('.')], key=lambda x: x.name)
@@ -61,7 +58,6 @@ class Console_ui:
         print "=" * (len(self.d.path)+13)
         for x in range(len(self.pwdlist)):
             print "{:3d} : {}".format(x+1, self.pwdlist[x])
-
 
     def _bi_range(self, start, end):
         """
@@ -227,8 +223,64 @@ class Console_ui:
                     Media(v).subtitle()
                 else:
                     if v.is_file():
-                        v.play()
+                        Media(v).play()
 
             except KeyboardInterrupt:
                 break
             n += 1
+
+
+    def format_film(self):
+        film = self.imdb_match()
+        if film == None:
+            print "Currently there is no information for this film"
+        else:
+            rt_rating = self.rt_rating(film)
+            IMDb().update(film)
+            print film.summary().encode('utf8')
+            if rt_rating is None:
+                print "\nNo Rotten Tomato score available for the film"
+            else:
+                print "\nRotten Tomato scores: ",
+                for key, value in rt_rating.iteritems():
+                    print "%s: %s    " % (key, value),
+                print
+
+    def format_tvdb(self):
+        show = self.tvdb()
+        if len(show) == 0:
+            print "No information on the show or film"
+        else:
+            show.update()
+            # show_imdb = self.imdb_get_results(show.IMDB_ID)[0]
+            # IMDb().update(show_imdb)
+            e = show[self.video_season()][self.video_episode()]
+
+            print "\nSeries"
+            print "=" * (len("Series"))
+
+
+            dict1 = OrderedDict([("Title", show.SeriesName),
+                                 ("Air Time", "%s - %s;  %s (First aired)"
+                                  % (show.Airs_DayOfWeek, show.Airs_Time, show.FirstAired)),
+                                 ("Genres", ', '.join(str(p) for p in show.Genre)),
+                                 ("Runtime", str(show.Runtime) + " mins"),
+                                 ("Network", show.Network),
+                                 ("Show Rating", "TVDB - %s (%s votes) " % (show.Rating, show.RatingCount)),
+                                 ("Overview", show.Overview)])
+
+            dict2 = OrderedDict([(e.season, " Epi %s - %s" % (e.EpisodeNumber, e.EpisodeName)),
+                                 ("Episode Air Date", e.FirstAired),
+                                 ("Episode Rating", e.Rating),
+                                 ("Episode Plot", e.Overview)])
+            # for key, value in dict1.iteritems():
+            #     # print key, ":", value
+            #     print"{:<13}:  {}".format(key, value)
+            # print '\n'
+            #
+            # for key, value in dict2.iteritems():
+            #     # print key, ":", value
+            #     print"{:<17}:  {}".format(key, value)
+            print tabulate(dict1.items(), stralign="left", tablefmt="plain")
+            print "\n"
+            print tabulate(dict2.items(), stralign="left", tablefmt="plain")
