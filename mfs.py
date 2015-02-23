@@ -6,9 +6,12 @@ from os.path import join, abspath, pardir
 from os import walk, chdir, getcwd
 import subprocess
 import re
+from collections import namedtuple
 
 from mimetypes import MimeTypes
 # import magic
+
+from media_info import MediaInfo
 
 
 class Item:
@@ -50,6 +53,9 @@ class Item:
     def file_path(self):
         return abspath(self.name)
 
+    def file_uri(self):
+        return "file:/"+self.file_path()
+
     def is_av(self):
         if self.file_type() == "video":
             return True
@@ -59,21 +65,13 @@ class Item:
             return False
 
 
-
-
 class Directory(object):
 
     def __init__(self, path):
         self.path = path
+        self.refresh(self.path)
         self.dirs = []
         self.files = []
-        for (p, d, f) in walk(self.path):
-            self.path = p
-            for dir in d:
-                self.dirs.append(Item(dir, "dir"))
-            for file in f:
-                self.files.append(Item(file, "file"))
-            break
 
     def list_dirs(self):
         return self.dirs[::]
@@ -84,6 +82,18 @@ class Directory(object):
     def prevdir(self):
         return abspath(join(self.path, pardir))
 
+    def refresh(self, path):
+        self.path = path
+        self.dirs = []
+        self.files = []
+        for (p, d, f) in walk(path):
+            self.path = p
+            for dir in d:
+                self.dirs.append(Item(dir, "dir"))
+            for file in f:
+                self.files.append(Item(file, "file"))
+            break
+
 
 class Browser(Directory):
 
@@ -92,11 +102,11 @@ class Browser(Directory):
 
     def chdir(self, item):
         chdir(item.name)
-        self.__init__(getcwd())
+        self.refresh(getcwd())
 
     def cdup(self):
         chdir("..")
-        self.__init__(getcwd())
+        self.refresh(getcwd())
 
 
 class Media():
@@ -104,6 +114,7 @@ class Media():
         # if file.is_dir():
         #     raise ValueError("Item instance of type file required")
         self.file = file
+        self.uri = file.file_uri()
 
     def play(self):
         if self.file.is_file():
@@ -112,16 +123,36 @@ class Media():
             raise ValueError("Can't play back %s because it is not a file" % self)
 
     def play_trailer(self):
+        media = MediaInfo(self.uri).factory(self.uri)
+        url = media.get_trailer_url()
         try:
-            subprocess.call(["mpv", self.trailer_url()])
+            subprocess.call(["mpv", url])
         except Exception as e:
             print "Error in input: %s" % e
             print "Please select a film file for trailer"
 
-    def info(self):
-        if self.video["type"] == "movie":
-            return self.format_film()
-        if self.video["type"] == "episode":
+    def subtitle(self):
+        media = MediaInfo(self.uri).factory(self.uri)
+        media.get_subtitle(self.file.file_path())
 
-            return self.format_tvdb()
+    def info(self):
+        media = MediaInfo(self.uri).factory(self.uri)
+        if media.type == "film":
+            film = media.imdb_film()
+            rt_info = media.rt_info(film)
+            imdb_info = media.imdb_info(film)
+            film_info = namedtuple("film", ["imdb", "rt"])
+            return film_info(imdb_info, rt_info)
+
+        if media.type == "series":
+            show = media.tvdb_match()
+            if len(show) == 0:
+                return
+            else:
+                show = media.tvdb_info(show)
+                show_info = namedtuple("series", ["tvdb", "season", "series_episode"])
+                return show_info(show, media.season, media.series_episode)
+
+
+
 

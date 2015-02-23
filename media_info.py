@@ -3,10 +3,8 @@ __author__ = 'raquel'
 import urllib
 import json
 import re
-from collections import OrderedDict
 
 import guessit
-import tabulate
 import subliminal
 from babelfish import Language
 from imdb import IMDb
@@ -29,6 +27,16 @@ class MediaInfo(object):
         elif video["type"] == "episode":
             return SeriesInfo(uri, guess=video)
 
+    @staticmethod
+    def get_subtitle(file_path):
+        videos = subliminal.scan_videos([file_path], subtitles=True, embedded_subtitles=True)
+        p = subliminal.download_best_subtitles(videos, {Language("eng")})
+        if len(p) == 0:
+            return "No subtitle found"
+        else:
+            subliminal.save_subtitles(p)
+            print "Subtitle downloaded"
+
 
 class FilmInfo(MediaInfo):
     def __init__(self, uri, guess=None):
@@ -40,6 +48,7 @@ class FilmInfo(MediaInfo):
         self.film_title = guess["title"]
         self.film_year = guess["year"] if "year" in guess.keys() else ""
         self.trailer_url = None
+        self.searched = SearchFromFile(self.uri, guess=guess)
 
     def get_trailer_url(self):
         if self.trailer_url is None:
@@ -50,11 +59,24 @@ class FilmInfo(MediaInfo):
             self.trailer_url = wdata['data']['items'][0]['player']['default']
         return self.trailer_url
 
+    def imdb_film(self):
+        film = self.searched.imdb_match()
+        return film
+
+    def rt_info(self, film):
+        # film = self.imdb_film()
+        rt_result = self.searched.rt_result(film)
+        return rt_result
+
+    def imdb_info(self, film):
+        self.searched.imdb_update(film)
+        return film
+
 
 class SeriesInfo(MediaInfo):
     def __init__(self, uri, guess=None):
         super(SeriesInfo, self).__init__(uri)
-        self.type = "episode"
+        self.type = "series"
 
         if guess is None:
             guess = guessit.guess_file_info(uri)
@@ -62,13 +84,29 @@ class SeriesInfo(MediaInfo):
         self.series_year = guess["year"] if "year" in guess.keys() else ""
         self.series_episode = guess["episodeNumber"]
         self.season = guess["season"] if "season" in guess.keys() else 1
+        self.searched = SearchFromFile(self.uri, guess=guess)
+
+    def tvdb_match(self):
+        return self.searched.tvdb()
+
+    def tvdb_info(self, series):
+        return self.searched.tvdb_update(series)
 
 
-class Search_from_file():
+class SearchFromFile():
     def __init__(self, uri, guess=None):
         if guess is None:
             guess = guessit.guess_file_info(uri)
-        self.guess = guess
+
+        if guess["type"] == "movie":
+            self.film_title = guess["title"]
+            self.film_year = guess["year"] if "year" in guess.keys() else ""
+
+        if guess["type"] == "episode":
+            self.series_title = guess["series"]
+            self.series_year = guess["year"] if "year" in guess.keys() else ""
+            self.series_episode = guess["episodeNumber"]
+            self.season = guess["season"] if "season" in guess.keys() else 1
 
     @staticmethod
     def search_string(t, y):
@@ -85,7 +123,7 @@ class Search_from_file():
         while c < len(title):
             title = title[0: len(title) - c]
             titles.append(" ".join(title))
-            c + 1
+            c += 1
         return titles
 
     def levenshtein(self, s1, s2):
@@ -116,11 +154,11 @@ class Search_from_file():
         return imdb.search_movie(s)
 
     def filter_year(self, r):
-        year_l = [ind for ind, x in enumerate(r) if "year" in x.keys() and x["year"] == self.video_year()]
+        year_l = [ind for ind, x in enumerate(r) if "year" in x.keys() and x["year"] == self.film_year]
         return year_l
 
     def akas(self, f):
-        IMDb().update(f)
+        self.imdb_update(f)
         if "akas" in f.keys():
             akas = f["akas"]
             return akas
@@ -128,34 +166,34 @@ class Search_from_file():
     def imdb_akas(self, f):
         akas = self.akas(f)
         if akas is not None:
-            if self.score_title(f["title"], self.video_title()) <= 0.2:
+            if self.score_title(f["title"], self.film_title) <= 0.2:
                 return f
             elif not [j for j in [re.match(r'([a-zA-Z]+)::', i, re.U).group(1) for i in akas
                       if not re.match(r'([a-zA-Z]+)::', i, re.U) is None]
-                      if self.score_title(j, self.video_title()) <= 0.2] is []:
+                      if self.score_title(j, self.film_title) <= 0.2] is []:
                 return f
             else:
                 print "Currently there is no information for this film"
 
     def shrunk_result(self, r):
-        shrunk = [t for t in self.shrink_title(self.video_title())]
+        shrunk = [t for t in self.shrink_title(self.film_title)]
         films = []
         for idx, result in enumerate(r):
             if len(result) != 0:
                 d = [[i, self.levenshtein(i["title"], shrunk[idx])]
-                     for i in result if i["year"] == self.video_year()]
+                     for i in result if i["year"] == self.film_year]
                 film = min(d, key=lambda x: x[1])
                 films.append(film)
         film = min(films, key=lambda x: x[1])[0]
         return film
 
     def imdb_match(self):
-        results = self.imdb_get_results(self.film_string(self.video_title(), self.video_year()))
+        results = self.imdb_get_results(self.search_string(self.film_title, self.film_year))
         if len(results) != 0:                               # 1. has results
             right_year = self.filter_year(results)       # 1.1 right year
             if len(right_year) != 0:                             # 1.11 has year
                 films = [results[y] for y in right_year if          # a. get the film that match with the title
-                         self.score_title(results[y]["title"], self.video_title()) <= 0.2]
+                         self.score_title(results[y]["title"], self.film_title) <= 0.2]
                 if len(films) != 0:
                     return films[0]
                 else:                                               # b. if no match, compare akas
@@ -167,24 +205,28 @@ class Search_from_file():
                         else:
                             return film
             else:                                                 # 1.12 no year
-                scores = [[i, self.levenshtein(i["title"], self.video_title())] for i in results]
+                scores = [[i, self.levenshtein(i["title"], self.film_title)] for i in results]
                 film = min(scores, key=lambda x: x[1])[0]
                 return film
         else:                                               # no results, shrink title
-            results = [self.imdb_get_results(self.film_string(t, self.video_year()))
-                       for t in self.shrink_title(self.video_title())]
+            results = [self.imdb_get_results(self.search_string(t, self.film_year))
+                       for t in self.shrink_title(self.film_title)]
             return self.shrunk_result(results)
+
+
+    def imdb_update(self, f):
+        return IMDb().update(f)
 
     def rt_match(self, year, title, rt_results):
         film_l = [x for x in rt_results if year - 2 <= x["year"] <= year + 2
                   and self.score_title(x["title"], title) <= 1.5]
         if len(film_l) == 1:
             film = film_l[0]
-            return film["ratings"]
+            return film
         elif len(film_l) > 1:
             title_score = [self.score_title(x["title"], title) for x in film_l]
             film = film_l[title_score.index(min(title_score))]
-            return film["ratings"]
+            return film
         else:
             pass
 
@@ -194,27 +236,27 @@ class Search_from_file():
             akas = [j for j in [re.match(r'([a-zA-Z]+)::', i, re.U).group(1) for i in imdb_akas
                     if not re.match(r'([a-zA-Z]+)::', i, re.U) is None]]
             for aka in akas:
-                search = self.film_string(aka, f["year"])
+                search = self.search_string(aka, f["year"])
                 rt_results = rt.search(search)
-                ratings = self.rt_match(f["year"], aka, rt_results)
-                return ratings
+                film = self.rt_match(f["year"], aka, rt_results)
+                return film
 
-    def rt_rating(self, f):
+    def rt_result(self, f):
         # set up rotten tomato api key
         rt = RT("qzqe4rz874rhxrkrjgrj95g3")
         if "title" in f.keys():
             t = f["title"]
         if "year" in f.keys():
             y = f["year"]
-        search = self.film_string(t, y)
+        search = self.search_string(t, y)
         if UnicodeEncodeError:
             search = search.encode("ascii", "ignore")
 
         rt_results = rt.search(search)
         if len(rt_results) != 0:
-            ratings = self.rt_match(f["year"], f["title"], rt_results)
-            if ratings is not None:
-                return ratings
+            result = self.rt_match(f["year"], f["title"], rt_results)
+            if result is not None:
+                return result
             else:
                 return self.rt_aka_match(f, rt)
         elif len(rt_results) == 0:
@@ -228,14 +270,14 @@ class Search_from_file():
 
     def tvdb(self):
         db = self.init_tvdb()
-        search = db.search(self.video_series(), "en")
+        search = db.search(self.series_title, "en")
         if len(search) == 0:
             return search
         else:
             if len(search) == 1:
                 show = search[0]
             elif len(search) > 1:
-                shows = [x for x in search if self.score_title(x.SeriesName, self.video_series()) < 1.5]
+                shows = [x for x in search if self.score_title(x.SeriesName, self.series_title) < 1.5]
 
                 if len(shows) == 1:
                     show = shows[0]
@@ -245,15 +287,8 @@ class Search_from_file():
                     show = search[int(raw_input()) - 1]
             return show
 
-    def imdb_update(self, f):
-        return IMDb().update(f)
+    def tvdb_update(self, series):
+        series.update()
+        return series
 
 
-    def subtitle(self):
-        videos = subliminal.scan_videos([self.file.file_path()], subtitles=True, embedded_subtitles=True)
-        p = subliminal.download_best_subtitles(videos, {Language("eng")})
-        if len(p) == 0:
-            print "No subtitle found"
-        else:
-            subliminal.save_subtitles(p)
-            print "Subtitle downloaded"
