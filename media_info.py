@@ -173,17 +173,23 @@ class SearchFromFile():
             else:
                 print "Currently there is no information for this film"
 
-    def shrunk_result(self, r):
-        shrunk = [t for t in self.shrink_title(self.film_title)]
-        films = []
-        for idx, result in enumerate(r):
+    def shrunk_film_result(self, title, year, results):
+        shrunk = [t for t in self.shrink_title(title)]
+        matches = []
+        for idx, result in enumerate(results):
             if len(result) != 0:
-                d = [[i, self.levenshtein(i["title"], shrunk[idx])]
-                     for i in result if i["year"] == self.film_year]
-                film = min(d, key=lambda x: x[1])
-                films.append(film)
-        film = min(films, key=lambda x: x[1])[0]
-        return film
+                if year != "":
+                    d = [[i, self.levenshtein(i["title"], shrunk[idx])]
+                         for i in result if i["year"] == year]
+                    match = min(d, key=lambda x: x[1])
+                    matches.append(match)
+                else:
+                    d = [[i, self.levenshtein(i["title"], shrunk[idx])]
+                         for i in result]
+                    match = min(d, key=lambda x: x[1])
+                    matches.append(match)
+        match = min(matches, key=lambda x: x[1])[0]
+        return match
 
     def imdb_match(self):
         results = self.imdb_get_results(self.search_string(self.film_title, self.film_year))
@@ -210,7 +216,8 @@ class SearchFromFile():
         else:                                               # no results, shrink title
             results = [self.imdb_get_results(self.search_string(t, self.film_year))
                        for t in self.shrink_title(self.film_title)]
-            return self.shrunk_result(results)
+            results = [f for f in results if len(f) != 0]
+            return self.shrunk_film_result(self.film_title, self.film_year, results)
 
 
     def imdb_update(self, f):
@@ -267,23 +274,39 @@ class SearchFromFile():
     def init_tvdb(self):
         return api.TVDB("B1F9E70454EBEB3C")
 
+    def shrink_tv_result(self, title, results):
+        shrunk = [t for t in self.shrink_title(title)]
+        print shrunk
+        matches = []
+        for idx, result in enumerate(results):
+            if len(result) != 0:
+                d = [[i, self.levenshtein(i.SeriesName, shrunk[idx])] for i in result]
+                match = min(d, key=lambda x: x[1])
+                matches.append(match)
+        match = min(matches, key=lambda x: x[1])[0]
+        return match
+
     def tvdb(self):
         db = self.init_tvdb()
-        search = db.search(self.series_title, "en")
-        if len(search) == 0:
-            return search
+        results = db.search(self.series_title, "en")
+        if len(results) == 0:
+            # results = [db.search(t, "en") for t in self.shrink_title(self.series_title)]
+            # results = [show for show in results if len(show) != 0]
+            # print len(results)
+            # return self.shrink_tv_result(self.series_title, results)
+            return results
         else:
-            if len(search) == 1:
-                show = search[0]
-            elif len(search) > 1:
-                shows = [x for x in search if self.score_title(x.SeriesName, self.series_title) < 1.5]
+            if len(results) == 1:
+                show = results[0]
+            elif len(results) > 1:
+                shows = [x for x in results if self.score_title(x.SeriesName, self.series_title) < 1.5]
 
                 if len(shows) == 1:
                     show = shows[0]
                 else:
-                    for idx, x in enumerate(search):
+                    for idx, x in enumerate(results):
                         print idx+1, ": ", x
-                    show = search[int(raw_input()) - 1]
+                    show = results[int(raw_input()) - 1]
             return show
 
     def tvdb_update(self, series):
