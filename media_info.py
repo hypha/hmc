@@ -6,6 +6,7 @@ import re
 
 import guessit
 import subliminal
+from subliminal import api as subapi
 from babelfish import Language
 from imdb import IMDb
 from rottentomatoes import RT
@@ -30,12 +31,9 @@ class MediaInfo(object):
     @staticmethod
     def get_subtitle(file_path):
         videos = subliminal.scan_videos([file_path], subtitles=True, embedded_subtitles=True)
-        p = subliminal.download_best_subtitles(videos, {Language("eng")})
-        if len(p) == 0:
-            return "No subtitle found"
-        else:
-            subliminal.save_subtitles(p)
-            print "Subtitle downloaded"
+        subs = subliminal.download_best_subtitles(videos, {Language("eng")})
+        subliminal.save_subtitles(subs)
+        return subs
 
 
 class FilmInfo(MediaInfo):

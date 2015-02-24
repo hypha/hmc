@@ -212,16 +212,14 @@ class Console_ui:
 
         if cmd == "info":
             info_choice = match.group('index')
-            # try:
-            item = self.pwdlist[int(info_choice)-1]
-            print '\n\n'
-            # Media(item).info()
-            self.format_info(item)
-
+            try:
+                item = self.pwdlist[int(info_choice)-1]
+                print '\n\n'
+                self.format_info(item)
+                return "prompt"
+            except Exception as e:
+                print "Error in input: %s" % e
             return "prompt"
-            # except Exception as e:
-            #     print "Error in input: %s" % e
-            # return "prompt"
 
     def get_input(self):
         try:

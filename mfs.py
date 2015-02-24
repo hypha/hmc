@@ -125,15 +125,18 @@ class Media():
     def play_trailer(self):
         media = MediaInfo(self.uri).factory(self.uri)
         url = media.get_trailer_url()
-        try:
-            subprocess.call(["mpv", url])
-        except Exception as e:
-            print "Error in input: %s" % e
-            print "Please select a film file for trailer"
+        print "Playing trailer for %s (%s)" % (media.film_title, media.film_year)
+        subprocess.call(["mpv", url])
 
     def subtitle(self):
         media = MediaInfo(self.uri).factory(self.uri)
-        media.get_subtitle(self.file.file_path())
+        subs = media.get_subtitle(self.file.file_path())
+        if not subs:
+            print "No subtitle downloaded"
+        else:
+            subtitles_count = sum([len(s) for s in subs.values()])
+            if subtitles_count == 1:
+                print '%d subtitle downloaded' % subtitles_count
 
     def info(self):
         media = MediaInfo(self.uri).factory(self.uri)
