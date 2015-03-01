@@ -23,6 +23,6 @@ def main(mypath):
     ui = Console_ui(Browser())
     ui.event_loop()
 
-logging_init(logging.DEBUG)
+logging_init(logging.INFO)
 logger = logging.getLogger("__hmc__")
 main(".")

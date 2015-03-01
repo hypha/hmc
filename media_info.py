@@ -199,7 +199,7 @@ class SearchFromFile():
 
     def imdb_match(self):
         results = self.imdb_get_results(self.search_string(self.film_title, self.film_year))
-        results = [f for f in results if f["kind"] == "movie"]
+        results = [f for f in results if f["kind"] == "movie" or f["kind"] == "tv movie"]
         if len(results) != 0:                               # 1. has results
             right_year = self.filter_year(results)       # 1.1 right year
             if len(right_year) != 0:                             # 1.11 has year
