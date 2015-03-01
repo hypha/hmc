@@ -34,8 +34,10 @@ class MediaInfo(object):
         DEFAULT_CACHE_FILE = os.path.join(xdg.BaseDirectory.save_cache_path('subliminal'), 'subliminal_cache.dbm')
         cache_file = os.path.abspath(os.path.expanduser(DEFAULT_CACHE_FILE))
         subliminal.cache_region.configure('dogpile.cache.dbm', arguments={'filename': cache_file, "lock_factory": MutexLock })
+        provider_configs = {}
+        provider_configs['addic7ed'] = {'username': "username", 'password': "password"}
         videos = subliminal.scan_videos([file_path], subtitles=True, embedded_subtitles=True)
-        subs = subliminal.api.download_best_subtitles(videos, {Language("eng")})
+        subs = subliminal.api.download_best_subtitles(videos, {Language("eng")}, provider_configs=provider_configs)
         subliminal.save_subtitles(subs)
         return subs
 
