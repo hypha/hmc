@@ -5,10 +5,24 @@ __version__ = '1.0'
 
 from mfs import Browser
 from console_ui import Console_ui
+import logging
+
+
+def logging_init(log_level=logging.INFO):
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter('%(levelname)-8s [%(name)s-%(funcName)s:%(lineno)d] %(message)s'))
+    logging.getLogger().addHandler(handler)
+    logging.getLogger().setLevel(log_level)
+    logging.getLogger('subliminal').addHandler(handler)
+    logging.getLogger('subliminal').setLevel(log_level)
+    logging.getLogger('subliminal.api').addHandler(handler)
+    logging.getLogger('subliminal.api').setLevel(log_level)
 
 
 def main(mypath):
     ui = Console_ui(Browser())
     ui.event_loop()
 
+logging_init(logging.DEBUG)
+logger = logging.getLogger("__hmc__")
 main(".")
