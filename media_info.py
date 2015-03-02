@@ -11,9 +11,7 @@ from imdb import IMDb
 from rottentomatoes import RT
 from pytvdbapi import api
 from utils import utf8_decode
-import xdg.BaseDirectory
-import os
-from subliminal import MutexLock
+
 
 class MediaInfo(object):
     def __init__(self, uri):
@@ -29,13 +27,12 @@ class MediaInfo(object):
         elif video["type"] == "episode":
             return SeriesInfo(uri, guess=video)
 
+
+
     @staticmethod
     def get_subtitle(file_path):
-        DEFAULT_CACHE_FILE = os.path.join(xdg.BaseDirectory.save_cache_path('subliminal'), 'subliminal_cache.dbm')
-        cache_file = os.path.abspath(os.path.expanduser(DEFAULT_CACHE_FILE))
-        subliminal.cache_region.configure('dogpile.cache.dbm', arguments={'filename': cache_file, "lock_factory": MutexLock })
-        provider_configs = {}
-        provider_configs['addic7ed'] = {'username': "username", 'password': "password"}
+        provider_configs = dict(addic7ted={'username': "username", 'password': "username"})
+        print provider_configs
         videos = subliminal.scan_videos([file_path], subtitles=True, embedded_subtitles=True)
         subs = subliminal.api.download_best_subtitles(videos, {Language("eng")}, provider_configs=provider_configs)
         subliminal.save_subtitles(subs)

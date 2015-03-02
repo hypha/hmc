@@ -31,10 +31,6 @@ class Item:
     def is_dir(self):
         return self.type == "dir"
 
-    @staticmethod
-    def __shell_quote(self, s):
-        return "'" + s.replace("'", "'\\''") + "'"
-
     def mime_type(self):
         mime = MimeTypes()
         mimetype = mime.guess_type(self.name)
