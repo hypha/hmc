@@ -32,7 +32,6 @@ class MediaInfo(object):
     @staticmethod
     def get_subtitle(file_path):
         provider_configs = dict(addic7ted={'username': "username", 'password': "username"})
-        print provider_configs
         videos = subliminal.scan_videos([file_path], subtitles=True, embedded_subtitles=True)
         subs = subliminal.api.download_best_subtitles(videos, {Language("eng")}, provider_configs=provider_configs)
         subliminal.save_subtitles(subs)
