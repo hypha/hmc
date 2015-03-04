@@ -21,7 +21,7 @@ Install by typing
   Note:  mpv (only tested with latest version built from https://github.com/mpv-player/mpv-build; earlier version without eabling ffmpeg options might result in some urls not playing properly; earlier versions should exist in the repositoriy of recent versions of Linux)
 
 
-2.Python libraries: IMDbPY, rottentomatoes, guessit, enzyme, subliminal, babelfish, tabulate, pytvdbapi
+2.Python libraries: IMDbPY, rottentomatoes, guessit, enzyme, subliminal, babelfish, tabulate, pytvdbapi, Pafy, yify-sub, pyxdg
 
    2.1.Go inside the directory where you cloned the files:
     
