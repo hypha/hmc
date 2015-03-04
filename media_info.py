@@ -3,6 +3,7 @@ __author__ = 'raquel'
 import urllib
 import json
 import re
+from collections import namedtuple
 
 import guessit
 import subliminal
@@ -10,7 +11,10 @@ from babelfish import Language
 from imdb import IMDb
 from rottentomatoes import RT
 from pytvdbapi import api
-from utils import utf8_decode
+import pafy
+import yify
+
+from utils import utf8_decode, stdoutIO
 
 
 class MediaInfo(object):
@@ -27,14 +31,24 @@ class MediaInfo(object):
         elif video["type"] == "episode":
             return SeriesInfo(uri, guess=video)
 
+    def get_subtitle(self, file_path, title):
+        provider_configs = dict(addic7ted={'username': "username", 'password': "password"})
+        providers = subliminal.provider_manager.available_providers
+        try:
+            videos = subliminal.scan_videos([file_path], subtitles=True, embedded_subtitles=True)
 
-
-    @staticmethod
-    def get_subtitle(file_path):
-        provider_configs = dict(addic7ted={'username': "username", 'password': "username"})
-        videos = subliminal.scan_videos([file_path], subtitles=True, embedded_subtitles=True)
-        subs = subliminal.api.download_best_subtitles(videos, {Language("eng")}, provider_configs=provider_configs)
-        subliminal.save_subtitles(subs)
+            subs = subliminal.api.download_best_subtitles(videos, {Language("eng")},
+                                                          providers=providers, provider_configs=provider_configs)
+            subliminal.save_subtitles(subs)
+        except Exception as e:
+            print "Subliminal Error: ", e
+            pass
+        finally:
+            if "subs" not in locals() or len(subs.values()) == 0:
+                print "\ntrying YIFY subtitles..."
+                with stdoutIO() as subs:
+                    yify.search_subtitle(title)
+                    subs = {"sub_link": subs.getvalue()}
         return subs
 
 
@@ -57,7 +71,11 @@ class FilmInfo(MediaInfo):
             wdata = utf8_decode(urllib.urlopen(url).read())
             wdata = json.loads(wdata)
             self.trailer_url = wdata['data']['items'][0]['player']['default']
-        return self.trailer_url
+            ytvideo = pafy.new(self.trailer_url)
+            title = ytvideo.title
+            trailer = namedtuple("trailer", ["trailer_url", "title"])
+        return trailer(self.trailer_url, title)
+        # return self.trailer_url
 
     def imdb_film(self):
         film = self.searched.imdb_match()

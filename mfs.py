@@ -7,7 +7,6 @@ from os import walk, chdir, getcwd
 import subprocess
 import re
 from collections import namedtuple
-
 from mimetypes import MimeTypes
 # import magic
 
@@ -120,19 +119,23 @@ class Media():
 
     def play_trailer(self):
         media = MediaInfo(self.uri).factory(self.uri)
-        url = media.get_trailer_url()
-        print "Playing trailer for %s (%s)" % (media.film_title, media.film_year)
+        trailer = media.get_trailer_url()
+        title = trailer.title
+        url = trailer.trailer_url
+        print "\nPlaying", title, '\n'
         subprocess.call(["mpv", url])
 
     def subtitle(self):
         media = MediaInfo(self.uri).factory(self.uri)
-        subs = media.get_subtitle(self.file.file_path())
-        if not subs:
-            print "No subtitle downloaded"
+        subs = media.get_subtitle(self.file.file_path(), media.film_title)
+        if not subs or not sum([len(s) for s in subs.values()]):
+            print "\nNo subtitle downloaded"
         else:
             subtitles_count = sum([len(s) for s in subs.values()])
             if subtitles_count == 1:
                 print '%d subtitle downloaded' % subtitles_count
+            if subtitles_count > 1:
+                print "\nYIFY subtitle downloaded"
 
     def info(self):
         media = MediaInfo(self.uri).factory(self.uri)
