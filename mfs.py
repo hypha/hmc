@@ -127,7 +127,11 @@ class Media():
 
     def subtitle(self):
         media = MediaInfo(self.uri).factory(self.uri)
-        subs = media.get_subtitle(self.file.file_path(), media.film_title)
+        if hasattr(media, "film_title"):
+            subs = media.get_subtitle(self.file.file_path(), media.film_title)
+        else:
+            subs = media.get_subtitle(self.file.file_path(), media.series_title)
+
         if not subs or not sum([len(s) for s in subs.values()]):
             print "\nNo subtitle downloaded"
         else:

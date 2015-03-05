@@ -21,6 +21,11 @@ def log():
 
 
     imdb_logger = logging.getLogger('imdbpy')
+    subliminal_logger = logging.getLogger("subliminal")
+    subliminal_api_logger = logging.getLogger("subliminal.api")
+    tvdb_logger = logging.getLogger("pytvdbapi")
+    hmc_logger = logging.getLogger(__name__)
+
 
     ch = logging.StreamHandler()
     ch.setLevel(logging.ERROR)
@@ -38,18 +43,31 @@ def log():
     imdb_logger.addHandler(fh)
     imdb_logger.setLevel(logging.DEBUG)
 
-    logging.getLogger('subliminal').addHandler(ch)
-    logging.getLogger('subliminal').setLevel(logging.ERROR)
-    logging.getLogger('subliminal.api').addHandler(ch)
-    logging.getLogger('subliminal.api').setLevel(logging.ERROR)
+    subliminal_logger.addHandler(ch)
+    subliminal_logger.setLevel(logging.ERROR)
+
+    subliminal_api_logger.addHandler(ch)
+    subliminal_api_logger.setLevel(logging.ERROR)
 
 
-    logging.getLogger('subliminal').addHandler(fh)
-    logging.getLogger('subliminal').setLevel(logging.DEBUG)
+    subliminal_logger.addHandler(fh)
+    subliminal_logger.setLevel(logging.DEBUG)
 
-    logging.getLogger('subliminal.api').addHandler(fh)
-    logging.getLogger('subliminal.api').setLevel(logging.DEBUG)
+    subliminal_api_logger.addHandler(fh)
+    subliminal_api_logger.setLevel(logging.DEBUG)
 
+
+    tvdb_logger.addHandler(ch)
+    tvdb_logger.setLevel(logging.ERROR)
+
+    tvdb_logger.addHandler(fh)
+    tvdb_logger.setLevel(logging.DEBUG)
+
+    hmc_logger.addHandler(ch)
+    hmc_logger.setLevel(logging.ERROR)
+
+    hmc_logger.addHandler(fh)
+    hmc_logger.setLevel(logging.DEBUG)
 
 def main(mypath):
     ui = Console_ui(Browser())
