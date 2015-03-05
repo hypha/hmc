@@ -2,8 +2,9 @@ __author__ = 'raquel'
 __version__ = '1.0'
 
 
-from os.path import join, abspath, pardir
+# from os.path import join, abspath, pardir, expanduser
 from os import walk, chdir, getcwd
+import os
 import subprocess
 import re
 from collections import namedtuple
@@ -12,6 +13,13 @@ from mimetypes import MimeTypes
 
 from media_info import MediaInfo
 
+from tvdb_cache import CacheHandler
+import urllib
+import urllib2
+from tvdb_cache import CacheHandler
+from urllib import quote as url_quote
+import xml.etree.cElementTree as ElementTree
+import cPickle as pickle
 
 class Item:
     def __init__(self, name, type):
@@ -46,7 +54,7 @@ class Item:
         # return self.mime_type().split("/")[0]
 
     def file_path(self):
-        return abspath(self.name)
+        return os.path.abspath(self.name)
 
     def file_uri(self):
         return "file:/"+self.file_path()
@@ -75,7 +83,7 @@ class Directory(object):
         return self.files[::]
 
     def prevdir(self):
-        return abspath(join(self.path, pardir))
+        return os.path.abspath(os.path.join(self.path, os.path.pardir))
 
     def refresh(self, path):
         self.path = path
@@ -110,6 +118,43 @@ class Media():
         #     raise ValueError("Item instance of type file required")
         self.file = file
         self.uri = file.file_uri()
+        # if cache is True:
+        #     self.config = dict(cache_enabled=True, cache_location=self.get_cache_dir())
+        #     self.urlopener = urllib2.build_opener(CacheHandler(self.config['cache_location']))
+        # elif isinstance(cache, basestring):
+        #     self.config['cache_enabled'] = True
+        #     self.config['cache_location'] = cache
+        #     self.urlopener = urllib2.build_opener(CacheHandler(self.config['cache_location']))
+        # elif isinstance(cache, urllib2.OpenerDirector):
+        #     # If passed something from urllib2.build_opener, use that
+        #     self.config['cache_enabled'] = True
+        #     self.urlopener = cache
+
+    @ staticmethod
+    def get_cache_dir():
+        home = os.path.expanduser("~/")
+        cache = os.path.join(home, ".cache/")
+        if not os.path.exists(cache):
+            os.makedirs(cache)
+        hmc = os.path.join(cache, "hmc/")
+        if not os.path.exists(hmc):
+            os.makedirs(hmc)
+        hmc_cache = os.path.join(hmc, "hmc_cache")
+        return hmc_cache
+
+    def file_cache(self):
+        cache_dir = self.get_cache_dir()
+        cache_file = os.path.join(cache_dir, self.file.name+".cache")
+        return cache_file
+
+    def load_info(self):
+        try:
+            info = pickle.load(open(self.file_cache(), "rb"))
+        except (IOError, EOFError):
+            print "not created yet"
+            info = self.info()
+            info = pickle.load(open(self.file_cache(), "rb"))
+        return info
 
     def play(self):
         if self.file.is_file():
@@ -148,8 +193,7 @@ class Media():
             rt_info = media.rt_info(film)
             imdb_info = media.imdb_info(film)
             film_info = namedtuple("film", ["imdb", "rt"])
-            return film_info(imdb_info, rt_info)
-
+            pickle.dump(film_info(imdb_info, rt_info), open(self.file_cache(), "wb"))
         if media.type == "series":
             show = media.tvdb_match()
             if len(show) == 0:
@@ -157,7 +201,7 @@ class Media():
             else:
                 show = media.tvdb_info(show)
                 show_info = namedtuple("series", ["tvdb", "season", "series_episode"])
-                return show_info(show, media.season, media.series_episode)
+                pickle.dump(show_info(show, media.season, media.series_episode), open(self.file_cache(), "wb"))
 
 
 

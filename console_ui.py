@@ -107,7 +107,7 @@ class Console_ui:
     @staticmethod
     def format_info(file):
         info_method = Media(file)
-        info = info_method.info()
+        info = info_method.load_info()
         if hasattr(info, "imdb"):
             film_info = info
             if film_info.imdb is None:
@@ -122,6 +122,7 @@ class Console_ui:
                     for key, value in rt_rating.iteritems():
                         print "%s: %s    " % (key, value),
                     print
+
         if hasattr(info, "tvdb"):
             show_info = info
             if show_info is None:
@@ -212,14 +213,14 @@ class Console_ui:
 
         if cmd == "info":
             info_choice = match.group('index')
-            try:
-                item = self.pwdlist[int(info_choice)-1]
-                print '\n\n'
-                self.format_info(item)
-                return "prompt"
-            except Exception as e:
-                print "Error in input: %s" % e
+            # try:
+            item = self.pwdlist[int(info_choice)-1]
+            print '\n\n'
+            self.format_info(item)
             return "prompt"
+            # except Exception as e:
+            #     print "Error in input: %s" % e
+            # return "prompt"
 
     def get_input(self):
         try:
