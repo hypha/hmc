@@ -108,31 +108,30 @@ class Console_ui:
     def format_info(file):
         info_method = Media(file)
         info = info_method.load_info()
-        if hasattr(info, "imdb"):
+        if "imdb" in info.keys():
             film_info = info
-            if film_info.imdb is None:
+            if film_info["imdb"] is None:
                 print "Currently there is no information for this film"
             else:
-                print film_info.imdb.summary().encode('utf8')
-                if film_info.rt is None:
+                print film_info["imdb"].summary().encode('utf8')
+                if film_info["rt"] is None:
                     print "\nNo Rotten Tomato score available for the film"
                 else:
-                    rt_rating = film_info.rt["ratings"]
+                    rt_rating = film_info["rt"]["ratings"]
                     print "\nRotten Tomato scores: ",
                     for key, value in rt_rating.iteritems():
                         print "%s: %s    " % (key, value),
                     print
-
-        if hasattr(info, "tvdb"):
+        if "tvdb" in info.keys():
             show_info = info
             if show_info is None:
                 print "No information on the show or film"
             else:
-                show = show_info.tvdb
+                show = show_info["tvdb"]
                 # show_imdb = self.imdb_get_results(show.IMDB_ID)[0]
                 # IMDb().update(show_imdb)
 
-                e = show[show_info.season][show_info.series_episode]
+                e = show[show_info["season"]][show_info["series_episode"]]
 
                 print "\nSeries"
                 print "=" * (len("Series"))
@@ -213,16 +212,16 @@ class Console_ui:
 
         if cmd == "info":
             info_choice = match.group('index')
-            # try:
-            item = self.pwdlist[int(info_choice)-1]
-            print '\n\n'
-            self.format_info(item)
+            try:
+                item = self.pwdlist[int(info_choice)-1]
+                print '\n\n'
+                self.format_info(item)
+                return "prompt"
+            except Exception as e:
+                print "Error in input: %s" % e
             return "prompt"
-            # except Exception as e:
-            #     print "Error in input: %s" % e
-            # return "prompt"
-
-    def get_input(self):
+    @staticmethod
+    def get_input():
         try:
             choice = raw_input("\nChoose a media file to play: ")
         except KeyboardInterrupt:

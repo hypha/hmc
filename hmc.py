@@ -56,9 +56,8 @@ def log():
     subliminal_api_logger.addHandler(fh)
     subliminal_api_logger.setLevel(logging.DEBUG)
 
-
-    tvdb_logger.addHandler(ch)
-    tvdb_logger.setLevel(logging.ERROR)
+    # tvdb_logger.addHandler(ch)              # choose not to print error message for tvdb because of
+    # tvdb_logger.setLevel(logging.ERROR)     # some weird error that I do not understand from the library
 
     tvdb_logger.addHandler(fh)
     tvdb_logger.setLevel(logging.DEBUG)

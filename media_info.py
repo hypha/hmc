@@ -32,8 +32,11 @@ class MediaInfo(object):
             return SeriesInfo(uri, guess=video)
 
     def get_subtitle(self, file_path, title):
-        provider_configs = dict(addic7ted={'username': "username", 'password': "password"})
+        provider_configs = dict(addic7ted={'username': "edi.planewalk.net", 'password': "kalampokia"})
         providers = subliminal.provider_manager.available_providers
+        # providers = set([u'opensubtitles'])
+
+        # print providers
         try:
             videos = subliminal.scan_videos([file_path], subtitles=True, embedded_subtitles=True)
 
@@ -292,7 +295,7 @@ class SearchFromFile():
                 pass
 
     def init_tvdb(self):
-        return api.TVDB("B1F9E70454EBEB3C")
+            return api.TVDB("B1F9E70454EBEB3C", cache=False, interactive=True)
 
     def shrink_tv_result(self, title, results):
         shrunk = [t for t in self.shrink_title(title)]

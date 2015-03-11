@@ -113,22 +113,14 @@ class Browser(Directory):
 
 
 class Media():
+    __info_in_memory = {}
+
     def __init__(self, file):
         # if file.is_dir():
         #     raise ValueError("Item instance of type file required")
         self.file = file
         self.uri = file.file_uri()
-        # if cache is True:
-        #     self.config = dict(cache_enabled=True, cache_location=self.get_cache_dir())
-        #     self.urlopener = urllib2.build_opener(CacheHandler(self.config['cache_location']))
-        # elif isinstance(cache, basestring):
-        #     self.config['cache_enabled'] = True
-        #     self.config['cache_location'] = cache
-        #     self.urlopener = urllib2.build_opener(CacheHandler(self.config['cache_location']))
-        # elif isinstance(cache, urllib2.OpenerDirector):
-        #     # If passed something from urllib2.build_opener, use that
-        #     self.config['cache_enabled'] = True
-        #     self.urlopener = cache
+        self.info = None
 
     @ staticmethod
     def get_cache_dir():
@@ -144,17 +136,22 @@ class Media():
 
     def file_cache(self):
         cache_dir = self.get_cache_dir()
-        cache_file = os.path.join(cache_dir, self.file.name+".cache")
+        cache_file = os.path.join(cache_dir, self.file.name + ".cache")
         return cache_file
 
     def load_info(self):
-        try:
-            info = pickle.load(open(self.file_cache(), "rb"))
-        except (IOError, EOFError):
-            print "not created yet"
-            info = self.info()
-            info = pickle.load(open(self.file_cache(), "rb"))
-        return info
+        if self.uri in self.__info_in_memory.keys():      # if in memory
+            print "loading from memory"
+            return self.__info_in_memory[self.uri]        # load from memory
+        else:
+            try:
+                self.info = pickle.load(open(self.file_cache(), "rb"))   # if in hard disk
+                print "loading from disk"
+            except (IOError, EOFError):
+                print "not created yet, calling info"
+                self.info = self.media_info()
+                # self.info = pickle.load(open(self.file_cache(), "rb"))
+            return self.info
 
     def play(self):
         if self.file.is_file():
@@ -186,23 +183,29 @@ class Media():
             if subtitles_count > 1:
                 print "\nYIFY subtitle downloaded"
 
-    def info(self):
+    def media_info(self):
         media = MediaInfo(self.uri).factory(self.uri)
         if media.type == "film":
             film = media.imdb_film()
             rt_info = media.rt_info(film)
             imdb_info = media.imdb_info(film)
-            film_info = namedtuple("film", ["imdb", "rt"])
-            pickle.dump(film_info(imdb_info, rt_info), open(self.file_cache(), "wb"))
+            film_info = dict(imdb=imdb_info, rt=rt_info)
+            # film_info = namedtuple("film", ["imdb", "rt"])
+            pickle.dump(film_info, open(self.file_cache(), "wb"))
+            self.__info_in_memory[self.uri] = film_info
+            return film_info
+
         if media.type == "series":
-            show = media.tvdb_match()
-            if len(show) == 0:
+            show_match = media.tvdb_match()
+            if len(show_match) == 0:
                 return
             else:
-                show = media.tvdb_info(show)
-                show_info = namedtuple("series", ["tvdb", "season", "series_episode"])
-                pickle.dump(show_info(show, media.season, media.series_episode), open(self.file_cache(), "wb"))
-
+                show = media.tvdb_info(show_match)
+                # show_info = namedtuple("series", ["tvdb", "season", "series_episode"])
+                show_info = dict(tvdb=show, season=media.season, series_episode=media.series_episode)
+                pickle.dump(show_info, open(self.file_cache(), "wb"))
+                self.__info_in_memory[self.uri] = show_info
+                return show_info
 
 
 
