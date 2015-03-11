@@ -125,6 +125,8 @@ class Media():
         if not os.path.exists(hmc):
             os.makedirs(hmc)
         hmc_cache = os.path.join(hmc, "hmc_cache")
+        if not os.path.exists(hmc_cache):
+            os.makedirs(hmc_cache)
         return hmc_cache
 
     def file_cache(self):
@@ -143,7 +145,7 @@ class Media():
             except (IOError, EOFError):
                 print "not created yet, calling info"
                 self.info = self.media_info()
-                # self.info = pickle.load(open(self.file_cache(), "rb"))
+                self.info = pickle.load(open(self.file_cache(), "rb"))
             return self.info
 
     def play(self):
