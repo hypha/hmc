@@ -2,24 +2,17 @@ __author__ = 'raquel'
 __version__ = '1.0'
 
 
-# from os.path import join, abspath, pardir, expanduser
 from os import walk, chdir, getcwd
 import os
 import subprocess
 import re
-from collections import namedtuple
 from mimetypes import MimeTypes
 # import magic
 
 from media_info import MediaInfo
 
-from tvdb_cache import CacheHandler
-import urllib
-import urllib2
-from tvdb_cache import CacheHandler
-from urllib import quote as url_quote
-import xml.etree.cElementTree as ElementTree
 import cPickle as pickle
+
 
 class Item:
     def __init__(self, name, type):
