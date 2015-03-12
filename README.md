@@ -1,7 +1,6 @@
 # hmc
 Hypha's media centre
 
-NOTE: Only tested on Linux Mint 17.1 Rebecca with python 2.7.6 and cache does work right. Initial test on Debian GNU/Linux 7.8 (wheezy) resulted in failer to pickle tvdb instance. It could be related to an older version of python (2.7.3)
 
 Installation:
 
