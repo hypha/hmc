@@ -104,6 +104,21 @@ class Browser(Directory):
         self.refresh(getcwd())
 
 
+class Struct:
+
+    def __init__(self, obj):
+        for k, v in obj.iteritems():
+            if isinstance(v, dict):
+                setattr(self, k, Struct(v))
+            else:
+                setattr(self, k, v)
+
+    def __getitem__(self, val):
+        return self.__dict__[val]
+
+    def __repr__(self):
+        return '{%s}' % str(', '.join('%s : %s' % (k, repr(v)) for (k, v) in self.__dict__.iteritems()))
+
 class Media():
 
     @staticmethod
@@ -118,13 +133,14 @@ class Media():
         return hmc
 
     __info_in_memory = shelve.open(get_cache_dir.__func__()+".cache")
-    print __info_in_memory
 
     def __init__(self, file):
         # if file.is_dir():
         #     raise ValueError("Item instance of type file required")
         self.file = file
         self.uri = file.file_uri()
+
+
 
     def file_cache(self):
         cache_dir = self.get_cache_dir()
@@ -173,6 +189,8 @@ class Media():
                 print "\nYIFY subtitle downloaded"
 
     def media_info(self):
+
+
         media = MediaInfo(self.uri).factory(self.uri)
         if media.type == "film":
             film = media.imdb_film()
@@ -188,7 +206,16 @@ class Media():
                 return
             else:
                 show = media.tvdb_info(show_match)
-                show_info = dict(tvdb=show, season=media.season, series_episode=media.series_episode)
+                e = show[media.season][media.series_episode]
+
+                show = dict(show.data.items())
+                show = Struct(show)
+
+                e = dict(e.data.items())
+                e = Struct(e)
+
+                # print show
+                show_info = dict(tvdb=show, episode=e)
                 self.__info_in_memory[self.uri] = show_info
                 return show_info
 

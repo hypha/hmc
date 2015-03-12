@@ -131,8 +131,7 @@ class Console_ui:
                 # show_imdb = self.imdb_get_results(show.IMDB_ID)[0]
                 # IMDb().update(show_imdb)
 
-                e = show[show_info["season"]][show_info["series_episode"]]
-
+                e = show_info["episode"]
                 print "\nSeries"
                 print "=" * (len("Series"))
                 dict1 = OrderedDict([("Title", show.SeriesName),
@@ -144,7 +143,7 @@ class Console_ui:
                                      ("Show Rating", "TVDB - %s (%s votes) " % (show.Rating, show.RatingCount)),
                                      ("Overview", show.Overview)])
 
-                dict2 = OrderedDict([(e.season, " Epi %s - %s" % (e.EpisodeNumber, e.EpisodeName)),
+                dict2 = OrderedDict([(e.SeasonNumber, " Epi %s - %s" % (e.EpisodeNumber, e.EpisodeName)),
                                      ("Episode Air Date", e.FirstAired),
                                      ("Episode Rating", e.Rating),
                                      ("Episode Plot", e.Overview)])
@@ -220,6 +219,7 @@ class Console_ui:
             except Exception as e:
                 print "Error in input: %s" % e
             return "prompt"
+
     @staticmethod
     def get_input():
         try:
