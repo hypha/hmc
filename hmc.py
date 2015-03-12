@@ -19,13 +19,11 @@ def log():
     #                     filename= log,
     #                     filemode="w")
 
-
     imdb_logger = logging.getLogger('imdbpy')
     subliminal_logger = logging.getLogger("subliminal")
     subliminal_api_logger = logging.getLogger("subliminal.api")
     tvdb_logger = logging.getLogger("pytvdbapi")
     hmc_logger = logging.getLogger(__name__)
-
 
     ch = logging.StreamHandler()
     ch.setLevel(logging.ERROR)
@@ -39,9 +37,11 @@ def log():
     fh.setFormatter(formatter_fh)
     ch.setFormatter(formatter_ch)
 
-
+    imdb_Stdout = imdb_logger.handlers[0]
     imdb_logger.addHandler(fh)
+    imdb_logger.removeHandler(imdb_Stdout)
     imdb_logger.setLevel(logging.DEBUG)
+
 
     subliminal_logger.addHandler(ch)
     subliminal_logger.setLevel(logging.ERROR)
