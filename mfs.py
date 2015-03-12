@@ -119,6 +119,7 @@ class Struct:
     def __repr__(self):
         return '{%s}' % str(', '.join('%s : %s' % (k, repr(v)) for (k, v) in self.__dict__.iteritems()))
 
+
 class Media():
 
     @staticmethod
@@ -140,8 +141,6 @@ class Media():
         self.file = file
         self.uri = file.file_uri()
 
-
-
     def file_cache(self):
         cache_dir = self.get_cache_dir()
         cache_file = os.path.join(cache_dir, self.file.name + ".cache")
@@ -151,9 +150,8 @@ class Media():
         if self.uri in self.__info_in_memory.keys():      # if in memory
             return self.__info_in_memory[self.uri]        # load from memory
         else:
-            print "retrieving info from the web..."
+            print "retrieving remote information, please wait..."
             info = self.media_info()
-            print "saving to disk"
             self.__info_in_memory[self.uri] = info
             print
             return info
@@ -189,8 +187,6 @@ class Media():
                 print "\nYIFY subtitle downloaded"
 
     def media_info(self):
-
-
         media = MediaInfo(self.uri).factory(self.uri)
         if media.type == "film":
             film = media.imdb_film()
@@ -206,16 +202,13 @@ class Media():
                 return
             else:
                 show = media.tvdb_info(show_match)
-                e = show[media.season][media.series_episode]
+                episode = show[media.season][media.series_episode]
 
-                show = dict(show.data.items())
-                show = Struct(show)
+                show_obj = Struct(dict(show.data.items()))
 
-                e = dict(e.data.items())
-                e = Struct(e)
+                episode_obj = Struct(dict(episode.data.items()))
 
-                # print show
-                show_info = dict(tvdb=show, episode=e)
+                show_info = dict(tvdb=show_obj, episode=episode_obj)
                 self.__info_in_memory[self.uri] = show_info
                 return show_info
 

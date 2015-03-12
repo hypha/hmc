@@ -81,9 +81,9 @@ class Console_ui:
 
     def multi_c(self, c, end=None):
         end = end or str(len(self.pwdlist))
-
         items = re.findall(self.item_list, c, re.IGNORECASE)
         alltracks = []
+
         for x in items:
             if x.lower() == "all":
                 start = [x for x in self.pwdlist if x.is_av()][0]
@@ -151,7 +151,6 @@ class Console_ui:
                 print tabulate(dict1.items(), stralign="left", tablefmt="plain")
                 print "\n"
                 print tabulate(dict2.items(), stralign="left", tablefmt="plain")
-
 
     def execute(self, cmd=None, match=None, choice=None):
 
