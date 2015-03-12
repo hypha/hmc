@@ -6,12 +6,11 @@ from os import walk, chdir, getcwd
 import os
 import subprocess
 import re
+import shelve
 from mimetypes import MimeTypes
 # import magic
 
 from media_info import MediaInfo
-
-import cPickle as pickle
 
 
 class Item:
@@ -106,27 +105,26 @@ class Browser(Directory):
 
 
 class Media():
-    __info_in_memory = {}
+
+    @staticmethod
+    def get_cache_dir():
+        home = os.path.expanduser("~/")
+        cache = os.path.join(home, ".cache/")
+        if not os.path.exists(cache):
+            os.makedirs(cache)
+        hmc = os.path.join(cache, "hmc_cache/")
+        if not os.path.exists(hmc):
+            os.makedirs(hmc)
+        return hmc
+
+    __info_in_memory = shelve.open(get_cache_dir.__func__()+".cache")
+    print __info_in_memory
 
     def __init__(self, file):
         # if file.is_dir():
         #     raise ValueError("Item instance of type file required")
         self.file = file
         self.uri = file.file_uri()
-
-    @ staticmethod
-    def get_cache_dir():
-        home = os.path.expanduser("~/")
-        cache = os.path.join(home, ".cache/")
-        if not os.path.exists(cache):
-            os.makedirs(cache)
-        hmc = os.path.join(cache, "hmc/")
-        if not os.path.exists(hmc):
-            os.makedirs(hmc)
-        hmc_cache = os.path.join(hmc, "hmc_cache")
-        if not os.path.exists(hmc_cache):
-            os.makedirs(hmc_cache)
-        return hmc_cache
 
     def file_cache(self):
         cache_dir = self.get_cache_dir()
@@ -135,19 +133,13 @@ class Media():
 
     def load_info(self):
         if self.uri in self.__info_in_memory.keys():      # if in memory
-            print "loading from memory"
             return self.__info_in_memory[self.uri]        # load from memory
         else:
-            try:
-                info = pickle.load(open(self.file_cache(), "rb"))   # if in hard disk
-                self.__info_in_memory[self.uri] = info
-                print "loading from disk"
-            except (IOError, EOFError):
-                print "not created yet, calling info"
-                info = self.media_info()
-                print "saving to disk"
-                pickle.load(open(self.file_cache(), "rb"))
-                self.__info_in_memory[self.uri] = info
+            print "retrieving info from the web..."
+            info = self.media_info()
+            print "saving to disk"
+            self.__info_in_memory[self.uri] = info
+            print
             return info
 
     def play(self):
@@ -187,8 +179,6 @@ class Media():
             rt_info = media.rt_info(film)
             imdb_info = media.imdb_info(film)
             film_info = dict(imdb=imdb_info, rt=rt_info)
-            # film_info = namedtuple("film", ["imdb", "rt"])
-            pickle.dump(film_info, open(self.file_cache(), "wb"))
             self.__info_in_memory[self.uri] = film_info
             return film_info
 
@@ -198,9 +188,7 @@ class Media():
                 return
             else:
                 show = media.tvdb_info(show_match)
-                # show_info = namedtuple("series", ["tvdb", "season", "series_episode"])
                 show_info = dict(tvdb=show, season=media.season, series_episode=media.series_episode)
-                pickle.dump(show_info, open(self.file_cache(), "wb"))
                 self.__info_in_memory[self.uri] = show_info
                 return show_info
 
