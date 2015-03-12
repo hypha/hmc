@@ -113,7 +113,6 @@ class Media():
         #     raise ValueError("Item instance of type file required")
         self.file = file
         self.uri = file.file_uri()
-        self.info = None
 
     @ staticmethod
     def get_cache_dir():
@@ -140,13 +139,16 @@ class Media():
             return self.__info_in_memory[self.uri]        # load from memory
         else:
             try:
-                self.info = pickle.load(open(self.file_cache(), "rb"))   # if in hard disk
+                info = pickle.load(open(self.file_cache(), "rb"))   # if in hard disk
+                self.__info_in_memory[self.uri] = info
                 print "loading from disk"
             except (IOError, EOFError):
                 print "not created yet, calling info"
-                self.info = self.media_info()
-                self.info = pickle.load(open(self.file_cache(), "rb"))
-            return self.info
+                info = self.media_info()
+                print "saving to disk"
+                pickle.load(open(self.file_cache(), "rb"))
+                self.__info_in_memory[self.uri] = info
+            return info
 
     def play(self):
         if self.file.is_file():
