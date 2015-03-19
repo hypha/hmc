@@ -8,10 +8,11 @@ import subprocess
 import re
 import shelve
 from mimetypes import MimeTypes
+import datetime
 # import magic
 
 from media_info import MediaInfo
-
+from utils import Struct
 
 class Item:
     def __init__(self, name, type):
@@ -104,22 +105,6 @@ class Browser(Directory):
         self.refresh(getcwd())
 
 
-class Struct:
-
-    def __init__(self, obj):
-        for k, v in obj.iteritems():
-            if isinstance(v, dict):
-                setattr(self, k, Struct(v))
-            else:
-                setattr(self, k, v)
-
-    def __getitem__(self, val):
-        return self.__dict__[val]
-
-    def __repr__(self):
-        return '{%s}' % str(', '.join('%s : %s' % (k, repr(v)) for (k, v) in self.__dict__.iteritems()))
-
-
 class Media():
 
     @staticmethod
@@ -134,6 +119,7 @@ class Media():
         return hmc
 
     __info_in_memory = shelve.open(get_cache_dir.__func__()+".cache")
+    expiry = datetime.timedelta(days=10)
 
     def __init__(self, file):
         # if file.is_dir():
@@ -146,15 +132,22 @@ class Media():
         cache_file = os.path.join(cache_dir, self.file.name + ".cache")
         return cache_file
 
+    def cache_on_disk(self):
+        print "retrieving remote information, please wait..."
+        info = self.media_info()
+        self.__info_in_memory[self.uri] = {"retrieved_on": datetime.datetime.now(),
+                                           "data": info}
+        return info
+
     def load_info(self):
-        if self.uri in self.__info_in_memory.keys():      # if in memory
-            return self.__info_in_memory[self.uri]        # load from memory
+        while self.uri in self.__info_in_memory.keys():      # if in memory
+            if self.__info_in_memory[self.uri]["retrieved_on"] + self.expiry < datetime.datetime.now():
+                return self.cache_on_disk()
+            else:
+                return self.__info_in_memory[self.uri]["data"]      # load from memory
         else:
             print "retrieving remote information, please wait..."
-            info = self.media_info()
-            self.__info_in_memory[self.uri] = info
-            print
-            return info
+            return self.cache_on_disk()
 
     def play(self):
         if self.file.is_file():
@@ -193,7 +186,9 @@ class Media():
             rt_info = media.rt_info(film)
             imdb_info = media.imdb_info(film)
             film_info = dict(imdb=imdb_info, rt=rt_info)
-            self.__info_in_memory[self.uri] = film_info
+            self.__info_in_memory[self.uri] = {"retrieved_on": datetime.datetime.now(),
+                                               "data": film_info}
+        # Return what we've got
             return film_info
 
         if media.type == "series":
@@ -209,8 +204,6 @@ class Media():
                 episode_obj = Struct(dict(episode.data.items()))
 
                 show_info = dict(tvdb=show_obj, episode=episode_obj)
-                self.__info_in_memory[self.uri] = show_info
+                self.__info_in_memory[self.uri] = {"retrieved_on": datetime.datetime.now(),
+                                                   "data": show_info}
                 return show_info
-
-
-
