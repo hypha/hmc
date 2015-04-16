@@ -14,6 +14,7 @@ import datetime
 from media_info import MediaInfo
 from utils import Struct
 
+
 class Item:
     def __init__(self, name, type):
         self.name = name
@@ -126,6 +127,7 @@ class Media():
         #     raise ValueError("Item instance of type file required")
         self.file = file
         self.uri = file.file_uri()
+        self.media = MediaInfo(self.uri).factory(self.uri)
 
     def file_cache(self):
         cache_dir = self.get_cache_dir()
@@ -133,7 +135,7 @@ class Media():
         return cache_file
 
     def cache_on_disk(self):
-        print "retrieving remote information, please wait..."
+        print "retrieving remote information, please wait...\n"
         info = self.media_info()
         self.__info_in_memory[self.uri] = {"retrieved_on": datetime.datetime.now(),
                                            "data": info}
@@ -146,7 +148,6 @@ class Media():
             else:
                 return self.__info_in_memory[self.uri]["data"]      # load from memory
         else:
-            print "retrieving remote information, please wait..."
             return self.cache_on_disk()
 
     def play(self):
@@ -156,19 +157,17 @@ class Media():
             raise ValueError("Can't play back %s because it is not a file" % self)
 
     def play_trailer(self):
-        media = MediaInfo(self.uri).factory(self.uri)
-        trailer = media.get_trailer_url()
+        trailer = self.media.get_trailer_url()
         title = trailer.title
         url = trailer.trailer_url
         print "\nPlaying", title, '\n'
         subprocess.call(["mpv", url])
 
     def subtitle(self):
-        media = MediaInfo(self.uri).factory(self.uri)
-        if hasattr(media, "film_title"):
-            subs = media.get_subtitle(self.file.file_path(), media.film_title)
+        if hasattr(self.media, "film_title"):
+            subs = self.media.get_subtitle(self.file.file_path(), self.media.film_title)
         else:
-            subs = media.get_subtitle(self.file.file_path(), media.series_title)
+            subs = self.media.get_subtitle(self.file.file_path(), self.media.series_title)
 
         if not subs or not sum([len(s) for s in subs.values()]):
             print "\nNo subtitle downloaded"
@@ -180,24 +179,23 @@ class Media():
                 print "\nYIFY subtitle downloaded"
 
     def media_info(self):
-        media = MediaInfo(self.uri).factory(self.uri)
-        if media.type == "film":
-            film = media.imdb_film()
-            rt_info = media.rt_info(film)
-            imdb_info = media.imdb_info(film)
+        if self.media.type == "film":
+            film = self.media.imdb_film()
+            rt_info = self.media.rt_info(film)
+            imdb_info = self.media.imdb_info(film)
             film_info = dict(imdb=imdb_info, rt=rt_info)
             self.__info_in_memory[self.uri] = {"retrieved_on": datetime.datetime.now(),
                                                "data": film_info}
         # Return what we've got
             return film_info
 
-        if media.type == "series":
-            show_match = media.tvdb_match()
+        if self.media.type == "series":
+            show_match = self.media.tvdb_match()
             if len(show_match) == 0:
                 return
             else:
-                show = media.tvdb_info(show_match)
-                episode = show[media.season][media.series_episode]
+                show = self.media.tvdb_info(show_match)
+                episode = show[self.media.season][self.media.series_episode]
 
                 show_obj = Struct(dict(show.data.items()))
 

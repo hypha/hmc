@@ -32,9 +32,8 @@ class MediaInfo(object):
             return SeriesInfo(uri, guess=video)
 
     def get_subtitle(self, file_path, title):
-        provider_configs = dict(addic7ted={'username': "edi.planewalk.net", 'password': "kalampokia"})
+        provider_configs = dict(addic7ted={'username': "username", 'password': "password"})
         providers = subliminal.provider_manager.available_providers
-        # providers = set([u'opensubtitles'])
 
         # print providers
         try:
@@ -42,6 +41,7 @@ class MediaInfo(object):
 
             subs = subliminal.api.download_best_subtitles(videos, {Language("eng")},
                                                           providers=providers, provider_configs=provider_configs)
+            print subs
             subliminal.save_subtitles(subs)
         except Exception as e:
             print "Subliminal Error: ", e
@@ -77,8 +77,7 @@ class FilmInfo(MediaInfo):
             ytvideo = pafy.new(self.trailer_url)
             title = ytvideo.title
             trailer = namedtuple("trailer", ["trailer_url", "title"])
-        return trailer(self.trailer_url, title)
-        # return self.trailer_url
+            return trailer(self.trailer_url, title)
 
     def imdb_film(self):
         film = self.searched.imdb_match()
@@ -294,7 +293,8 @@ class SearchFromFile():
             else:
                 pass
 
-    def init_tvdb(self):
+    @staticmethod
+    def init_tvdb():
             return api.TVDB("B1F9E70454EBEB3C", cache=False, interactive=True)
 
     def shrink_tv_result(self, title, results):
@@ -332,8 +332,8 @@ class SearchFromFile():
                     show = results[int(raw_input()) - 1]
             return show
 
-    def tvdb_update(self, series):
+    @staticmethod
+    def tvdb_update(series):
         series.update()
         return series
-
 

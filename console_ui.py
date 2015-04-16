@@ -57,15 +57,35 @@ class Console_ui:
         """ Update self.pwdlist from d """
         self.pwdlist = []
         dirs = sorted([i for i in self.d.list_dirs() if not i.name.startswith('.')], key=lambda x: x.name)
-        av_f = sorted([i for i in self.d.list_files() if not i.name.startswith('.')
-                       and i.is_av()], key=lambda x: x.name)
-        self.pwdlist.extend(dirs + av_f)
+        self.av_f = sorted([i for i in self.d.list_files() if not i.name.startswith('.')
+                            and i.is_av()], key=lambda x: x.name)
+        self.pwdlist.extend(dirs + self.av_f)
 
     def print_list_pwd(self):
         print '\n', "Listing of %s: " % self.d.path
         print "=" * (len(self.d.path)+13)
+
         for x in range(len(self.pwdlist)):
-            print "{:3d} : {}".format(x+1, self.pwdlist[x])
+            if self.pwdlist[x] in self.av_f:
+                try:
+                    m = Media(self.pwdlist[x]).media
+                    if re.match("^RARBG.com", self.pwdlist[x].name, re.IGNORECASE) is not None:
+                        pass
+                    elif len(re.findall("sample", self.pwdlist[x].name, re.IGNORECASE)) != 0:
+                        print u"{:3d} : {}".format(x+1, m.film_title), "[%s]" % m.film_year, "- Sample"
+                    elif hasattr(m, "film_title"):
+                        if m.film_year != "":
+                            print u"{:3d} : {}".format(x+1, m.film_title), "[%s]" % m.film_year
+                        else:
+                            print u"{:3d} : {}".format(x+1, m.film_title)
+                    elif hasattr(m, "series_title"):
+                        print u"{:3d} : {} -".format(x+1, m.series_title), \
+                            "Season %s Episode %s" % (m.season, m.series_episode)
+                except Exception:
+                    print "{:3d} : {}".format(x+1, self.pwdlist[x])
+            else:
+                print "{:3d} : {}".format(x+1, self.pwdlist[x])
+
 
     def _bi_range(self, start, end):
         """
