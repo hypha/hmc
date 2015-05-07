@@ -93,4 +93,8 @@ Command
 	
 	info 3
 
+12.to play a url, do:
+
+       (play)url http://yourlink 
+
 Then you will see an imdb summary of the film alongside its rotten tomato scores.
