@@ -32,6 +32,11 @@ class Item:
     def is_dir(self):
         return self.type == "dir"
 
+    def is_url(self):
+        pattern = "https?://"
+        if re.search(pattern, self.name) is not None:
+            return self.type == "url"
+
     def mime_type(self):
         mime = MimeTypes()
         mimetype = mime.guess_type(self.name)
@@ -122,12 +127,15 @@ class Media():
     __info_in_memory = shelve.open(get_cache_dir.__func__()+".cache")
     expiry = datetime.timedelta(days=10)
 
-    def __init__(self, file):
+    def __init__(self, uri):
         # if file.is_dir():
         #     raise ValueError("Item instance of type file required")
-        self.file = file
-        self.uri = file.file_uri()
-        self.media = MediaInfo(self.uri).factory(self.uri)
+        if uri.is_url():
+            self.uri = uri
+        else:
+            self.file = uri
+            self.uri = uri.file_uri()
+            self.media = MediaInfo(self.uri).factory(self.uri)
 
     def file_cache(self):
         cache_dir = self.get_cache_dir()
