@@ -33,9 +33,7 @@ class Item:
         return self.type == "dir"
 
     def is_url(self):
-        pattern = "https?://"
-        if re.search(pattern, self.name) is not None:
-            return self.type == "url"
+        return self.type == "url"
 
     def mime_type(self):
         mime = MimeTypes()
@@ -170,6 +168,12 @@ class Media():
         url = trailer.trailer_url
         print "\nPlaying", title, '\n'
         subprocess.call(["mpv", url])
+
+    def play_url(self):
+        if self.uri.is_url():
+            subprocess.call(["mpv", self.uri.name])
+        else:
+            raise ValueError("Can't play back %s because it is not a valid url" % self)
 
     def subtitle(self):
         if hasattr(self.media, "film_title"):

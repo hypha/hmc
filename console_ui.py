@@ -10,7 +10,7 @@ from collections import OrderedDict
 
 from tabulate import tabulate
 
-from mfs import Media
+from mfs import Media, Item
 
 
 class Console_ui:
@@ -25,7 +25,8 @@ class Console_ui:
         "play":             r'^\s*(play\s+)?(\d+|all)\s*',
         "shuffle_play":     r'^\s*shuffle\s+play\s+|^\s*shuffle\s+(\d+|all|-)|^\s*\s+shuffle',
         "shuffle_trailer":  r'shuffle\s+trailer\s+',
-        "subtitle":              r'^\s*sub\s+',
+        "subtitle":         r'^\s*sub\s+',
+        "playurl":          r'^\s*(play)?url\s+',
 
     }
 
@@ -106,29 +107,34 @@ class Console_ui:
             return range(start, end + 1)
 
     def multi_c(self, c, end=None):
-        end = end or str(len(self.pwdlist))
-        items = re.findall(self.item_list, c, re.IGNORECASE)
-        alltracks = []
+        url_pattern = r"https?://.+"
+        url_match = re.search(url_pattern, c)
+        if url_match is not None:
+            return url_match.group(0)
+        else:
+            end = end or str(len(self.pwdlist))
+            items = re.findall(self.item_list, c, re.IGNORECASE)
+            alltracks = []
 
-        for x in items:
-            if x.lower() == "all":
-                start = [x for x in self.pwdlist if x.is_av()][0]
-                x = str(self.pwdlist.index(start) + 1) + "-"
+            for x in items:
+                if x.lower() == "all":
+                    start = [x for x in self.pwdlist if x.is_av()][0]
+                    x = str(self.pwdlist.index(start) + 1) + "-"
 
-            if x.startswith("-"):
-                x = "1" + x
+                if x.startswith("-"):
+                    x = "1" + x
 
-            elif x.endswith("-"):
-                x = x + end
+                elif x.endswith("-"):
+                    x = x + end
 
-            if "-" in x:
-                nrange = x.split("-")
-                startend = map(int, nrange)
-                alltracks += self._bi_range(*startend)
+                if "-" in x:
+                    nrange = x.split("-")
+                    startend = map(int, nrange)
+                    alltracks += self._bi_range(*startend)
 
-            else:
-                alltracks.append(int(x))
-        return alltracks
+                else:
+                    alltracks.append(int(x))
+            return alltracks
 
     @staticmethod
     def format_info(file):
@@ -215,6 +221,13 @@ class Console_ui:
                 print "Error in input: %s" % e
                 print "Please enter a correct index for the file."
                 return "prompt"
+        if cmd == "playurl":
+            try:
+                self.play_list(choice, url=True)
+            except Exception as e:
+                print "Error in input: %s" % e
+                print "Please enter a url."
+                return "prompt"
 
         if cmd == "shuffle_trailer":
             try:
@@ -287,7 +300,6 @@ class Console_ui:
                 next_state = "ls"
             choice = self.get_input()
             play_items = self.multi_c(choice)
-
             for cmd in self.cmds.keys():
                 m = re.match(self.cmds[cmd], choice, re.IGNORECASE)
                 if m is not None:
@@ -298,29 +310,34 @@ class Console_ui:
                         print "Sorry, command '%s' is not yet implemented" % cmd
             readline.write_history_file(self.history_log())
 
-    def play_list(self, selection, shuffle=False, repeat=False, trailer=False, sub=False):
-        v_list = [self.pwdlist[int(x)-1] for x in self.multi_c(str(selection))]
-        # Where else can we better handle a directory?!
-        if len(v_list) == 1 and v_list[0].is_dir():
-            self.d.chdir(v_list[0])
-            self.update_pwd()
+    def play_list(self, selection, shuffle=False, repeat=False, trailer=False, sub=False, url=False):
+        if url:
+            url = self.multi_c(selection)
+            Media(Item(url, "url")).play_url()
+        else:
+            v_list = [self.pwdlist[int(x)-1] for x in self.multi_c(str(selection))]
+            print v_list
+            # Where else can we better handle a directory?!
+            if len(v_list) == 1 and v_list[0].is_dir():
+                self.d.chdir(v_list[0])
+                self.update_pwd()
 
-        if shuffle:
-            random.shuffle(v_list)
-        n = 0
+            if shuffle:
+                random.shuffle(v_list)
+            n = 0
 
-        while 0 <= n <= len(v_list)-1:
-            v = v_list[n]
-            try:
-                if trailer:
-                    Media(v).play_trailer()
-                elif sub:
-                    Media(v).subtitle()
-                else:
-                    if v.is_file():
-                        Media(v).play()
+            while 0 <= n <= len(v_list)-1:
+                v = v_list[n]
+                try:
+                    if trailer:
+                        Media(v).play_trailer()
+                    elif sub:
+                        Media(v).subtitle()
+                    else:
+                        if v.is_file():
+                            Media(v).play()
 
-            except KeyboardInterrupt:
-                break
-            n += 1
+                except KeyboardInterrupt:
+                    break
+                n += 1
 
