@@ -224,6 +224,7 @@ class Console_ui:
         if cmd == "playurl":
             try:
                 self.play_list(choice, url=True)
+                return "ls"
             except Exception as e:
                 print "Error in input: %s" % e
                 print "Please enter a url."
@@ -316,7 +317,6 @@ class Console_ui:
             Media(Item(url, "url")).play_url()
         else:
             v_list = [self.pwdlist[int(x)-1] for x in self.multi_c(str(selection))]
-            print v_list
             # Where else can we better handle a directory?!
             if len(v_list) == 1 and v_list[0].is_dir():
                 self.d.chdir(v_list[0])

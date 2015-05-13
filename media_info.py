@@ -32,7 +32,7 @@ class MediaInfo(object):
             return SeriesInfo(uri, guess=video)
 
     def get_subtitle(self, file_path, title):
-        provider_configs = dict(addic7ted={'username': "edi.planewalk.net", 'password': "kalampokia"})
+        provider_configs = dict(addic7ted={'username': "username", 'password': "password"})
         providers = subliminal.provider_manager.available_providers
 
         # print providers
@@ -41,7 +41,8 @@ class MediaInfo(object):
 
             subs = subliminal.api.download_best_subtitles(videos, {Language("eng")},
                                                           providers=providers, provider_configs=provider_configs)
-            print subs
+            if len(subs) != 0:
+                print "Found subtitle on: ", subs.values()[0][0]
             subliminal.save_subtitles(subs)
         except Exception as e:
             print "Subliminal Error: ", e
