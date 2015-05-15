@@ -11,7 +11,6 @@ from babelfish import Language
 from imdb import IMDb
 from rottentomatoes import RT
 from pytvdbapi import api
-import pafy
 import yify
 
 from utils import utf8_decode, stdoutIO
@@ -63,11 +62,15 @@ class FilmInfo(MediaInfo):
 
         if guess is None:
             guess = guessit.guess_file_info(uri)
-        self.film_title = guess["title"]
-        self.film_year = guess["year"] if "year" in guess.keys() else ""
-        self.trailer_url = None
-        self.searched = SearchFromFile(self.uri, guess=guess)
-
+        try:
+            self.film_title = guess["title"]
+            self.film_year = guess["year"] if "year" in guess.keys() else ""
+            self.trailer_url = None
+            self.searched = SearchFromFile(self.uri, guess=guess)
+        except KeyError:
+            self.film_title = ""
+            self.film_year = ""
+        
     def get_trailer_url(self):
         if self.trailer_url is None:
             # url = "https://gdata.youtube.com/feeds/api/videos/?q={0}+{1}+trailer&alt=jsonc&v=2"
