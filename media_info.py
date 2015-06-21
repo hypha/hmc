@@ -70,7 +70,7 @@ class FilmInfo(MediaInfo):
         except KeyError:
             self.film_title = ""
             self.film_year = ""
-        
+
     def get_trailer_url(self):
         if self.trailer_url is None:
             # url = "https://gdata.youtube.com/feeds/api/videos/?q={0}+{1}+trailer&alt=jsonc&v=2"

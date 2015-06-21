@@ -7,7 +7,9 @@ import contextlib
 
 import subliminal
 import xdg.BaseDirectory
+import terminal_size as terminalsize
 
+import collections
 uni, byt, xinput = str, bytes, input
 
 
@@ -39,6 +41,14 @@ def stdoutIO(stdout=None):
     yield stdout
     sys.stdout = old
 
+
+def getxy():
+    """ Get terminal size, terminal width and max-results. """
+    x, y = terminalsize.get_terminal_size()
+    max_results = y - 4 if y < 54 else 50
+    max_results = 1 if y <= 5 else max_results
+    XYTuple = collections.namedtuple('XYTuple', 'width height max_results')
+    return XYTuple(x, y, max_results)
 
 class Struct:
     def __init__(self, obj):

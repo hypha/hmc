@@ -9,16 +9,18 @@ import re
 import shelve
 from mimetypes import MimeTypes
 import datetime
+
+
 # import magic
-
-from media_info import MediaInfo
 from utils import Struct
+from media_info import MediaInfo
 
 
-class Item:
+class Item(object):
     def __init__(self, name, type):
         self.name = name
         self.type = type
+        self.uri = self.file_uri()
 
     def __str__(self):
         if self.is_dir():
@@ -32,8 +34,9 @@ class Item:
     def is_dir(self):
         return self.type == "dir"
 
-    def is_url(self):
-        return self.type == "url"
+    def is_uri(self):
+        # return self.type == "uri"   #ToDO: change it to stream
+        return False
 
     def mime_type(self):
         mime = MimeTypes()
@@ -71,13 +74,13 @@ class Directory(object):
         self.path = path
         self.refresh(self.path)
         self.dirs = []
-        self.files = []
+        self.items = []
 
     def list_dirs(self):
         return self.dirs[::]
 
     def list_files(self):
-        return self.files[::]
+        return self.items[::]
 
     def prevdir(self):
         return os.path.abspath(os.path.join(self.path, os.path.pardir))
@@ -85,13 +88,13 @@ class Directory(object):
     def refresh(self, path):
         self.path = path
         self.dirs = []
-        self.files = []
+        self.items = []
         for (p, d, f) in walk(path):
             self.path = p
             for dir in d:
                 self.dirs.append(Item(dir, "dir"))
             for file in f:
-                self.files.append(Item(file, "file"))
+                self.items.append(Item(file, "file"))
             break
 
 
@@ -125,61 +128,52 @@ class Media():
     __info_in_memory = shelve.open(get_cache_dir.__func__()+".cache")
     expiry = datetime.timedelta(days=10)
 
-    def __init__(self, uri):
+    def __init__(self, item):
         # if file.is_dir():
         #     raise ValueError("Item instance of type file required")
-        if uri.is_url():
-            self.uri = uri
-        else:
-            self.file = uri
-            self.uri = uri.file_uri()
-            self.media = MediaInfo(self.uri).factory(self.uri)
+        self.item = item
+        self.media = MediaInfo(self.item.uri).factory(self.item.uri)
 
     def file_cache(self):
         cache_dir = self.get_cache_dir()
-        cache_file = os.path.join(cache_dir, self.file.name + ".cache")
+        cache_file = os.path.join(cache_dir, self.item.name + ".cache")
         return cache_file
 
     def cache_on_disk(self):
         print "retrieving remote information, please wait...\n"
         info = self.media_info()
-        self.__info_in_memory[self.uri] = {"retrieved_on": datetime.datetime.now(),
-                                           "data": info}
+        self.__info_in_memory[self.item.uri] = {"retrieved_on": datetime.datetime.now(), "data": info}
         return info
 
     def load_info(self):
-        while self.uri in self.__info_in_memory.keys():      # if in memory
-            if self.__info_in_memory[self.uri]["retrieved_on"] + self.expiry < datetime.datetime.now():
+        while self.item.uri in self.__info_in_memory.keys():      # if in memory
+            if self.__info_in_memory[self.item.uri]["retrieved_on"] + self.expiry < datetime.datetime.now():
                 return self.cache_on_disk()
             else:
-                return self.__info_in_memory[self.uri]["data"]      # load from memory
+                return self.__info_in_memory[self.item.uri]["data"]      # load from memory
         else:
             return self.cache_on_disk()
 
     def play(self):
-        if self.file.is_file():
-            subprocess.call(["mpv",  self.file.name])
+        if self.item.is_file():
+            subprocess.call(["mpv",  self.item.name])  #ToDo see whether I can play all uri so that it would be a standard.
+        elif self.item.is_uri():
+            subprocess.call(["mpv", self.item.name])
         else:
             raise ValueError("Can't play back %s because it is not a file" % self)
 
     def play_trailer(self):
-        trailer = self.media.get_trailer_url()
+        trailer = self.media.get_trailer_uri()
         title = trailer.title
-        url = trailer.trailer_url
+        uri = trailer.trailer_uri
         print "\nPlaying", title, '\n'
-        subprocess.call(["mpv", url])
-
-    def play_url(self):
-        if self.uri.is_url():
-            subprocess.call(["mpv", self.uri.name])
-        else:
-            raise ValueError("Can't play back %s because it is not a valid url" % self)
+        subprocess.call(["mpv", uri])
 
     def subtitle(self):
         if hasattr(self.media, "film_title"):
-            subs = self.media.get_subtitle(self.file.file_path(), self.media.film_title)
+            subs = self.media.get_subtitle(self.item.file_path(), self.media.film_title)
         else:
-            subs = self.media.get_subtitle(self.file.file_path(), self.media.series_title)
+            subs = self.media.get_subtitle(self.item.file_path(), self.media.series_title)
 
         if not subs or not sum([len(s) for s in subs.values()]):
             print "\nNo subtitle downloaded"
@@ -196,7 +190,7 @@ class Media():
             rt_info = self.media.rt_info(film)
             imdb_info = self.media.imdb_info(film)
             film_info = dict(imdb=imdb_info, rt=rt_info)
-            self.__info_in_memory[self.uri] = {"retrieved_on": datetime.datetime.now(),
+            self.__info_in_memory[self.item.uri] = {"retrieved_on": datetime.datetime.now(),
                                                "data": film_info}
         # Return what we've got
             return film_info
@@ -214,6 +208,20 @@ class Media():
                 episode_obj = Struct(dict(episode.data.items()))
 
                 show_info = dict(tvdb=show_obj, episode=episode_obj)
-                self.__info_in_memory[self.uri] = {"retrieved_on": datetime.datetime.now(),
+                self.__info_in_memory[self.item.uri] = {"retrieved_on": datetime.datetime.now(),
                                                    "data": show_info}
                 return show_info
+
+
+class uriItem(Item):
+
+    def __init__(self, name, uri):
+        super(uriItem, self).__init__(name=name, type="uri")
+        self.uri = uri
+
+    def is_uri(self):
+        return True
+    
+
+
+

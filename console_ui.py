@@ -10,7 +10,7 @@ from collections import OrderedDict
 
 from tabulate import tabulate
 
-from mfs import Media, Item
+from mfs import Media, uriItem
 
 
 class Console_ui:
@@ -27,6 +27,7 @@ class Console_ui:
         "shuffle_trailer":  r'shuffle\s+trailer\s+',
         "subtitle":         r'^\s*sub\s+',
         "playurl":          r'^\s*(play)?url\s+',
+        "youtube":          r'^\s*sub\s+'
 
     }
 
@@ -92,7 +93,6 @@ class Console_ui:
         print "=" * (len(self.d.path)+13)
         for x in range(len(self.pwdlist)):
             print "{:3d} : {}".format(x+1, self.pwdlist[x])
-
 
     def _bi_range(self, start, end):
         """
@@ -221,9 +221,10 @@ class Console_ui:
                 print "Error in input: %s" % e
                 print "Please enter a correct index for the file."
                 return "prompt"
-        if cmd == "playurl":
+
+        if cmd == "playurl":   #ToDo playurl is separated by spaces, add help, suggest a help system
             try:
-                self.play_list(choice, url=True)
+                self.play_list(choice, uri=True)
                 return "ls"
             except Exception as e:
                 print "Error in input: %s" % e
@@ -258,6 +259,9 @@ class Console_ui:
             except Exception as e:
                 print "Error in input: %s" % e
             return "prompt"
+
+        if cmd == "youtube":
+            print "Entering Youtube Browsing mode. Please type in a query term."
 
     @staticmethod
     def prompt_for_exit():
@@ -311,33 +315,43 @@ class Console_ui:
                         print "Sorry, command '%s' is not yet implemented" % cmd
             readline.write_history_file(self.history_log())
 
-    def play_list(self, selection, shuffle=False, repeat=False, trailer=False, sub=False, url=False):
-        if url:
-            url = self.multi_c(selection)
-            Media(Item(url, "url")).play_url()
+    def play_list(self, selection, shuffle=False, repeat=False, trailer=False, sub=False, uri=False):
+        if uri:
+            uri_list = self.multi_c(selection).split()
+            if shuffle:
+                random.shuffle(uri_list)
+
+            else:
+                for uri in uri_list:
+                    Media(uriItem(uri, "uri")).play()
+
         else:
-            v_list = [self.pwdlist[int(x)-1] for x in self.multi_c(str(selection))]
+            v_list = [self.pwdlist[int(x)-1] for x in self.multi_c(str(selection))] #ToDo don't need str
+            # make a list into a list of selected items
+
             # Where else can we better handle a directory?!
             if len(v_list) == 1 and v_list[0].is_dir():
                 self.d.chdir(v_list[0])
                 self.update_pwd()
+                return
 
             if shuffle:
                 random.shuffle(v_list)
-            n = 0
 
-            while 0 <= n <= len(v_list)-1:
-                v = v_list[n]
+            #n = 0
+            for v in v_list:
+            #while 0 <= n <= len(v_list)-1:
+                #v = v_list[n]
                 try:
                     if trailer:
                         Media(v).play_trailer()
                     elif sub:
                         Media(v).subtitle()
                     else:
-                        if v.is_file():
-                            Media(v).play()
+                        #if v.is_file():
+                        Media(v).play()
 
                 except KeyboardInterrupt:
                     break
-                n += 1
+                #n += 1
 
