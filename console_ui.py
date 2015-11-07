@@ -27,7 +27,7 @@ class Console_ui:
         "shuffle_trailer":  r'shuffle\s+trailer\s+',
         "subtitle":         r'^\s*sub\s+',
         "playurl":          r'^\s*(play)?url\s+',
-        "youtube":          r'^\s*sub\s+'
+        "youtube":          r'^\s*youtube\s+'
 
     }
 
