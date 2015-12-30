@@ -110,7 +110,7 @@ class SeriesInfo(MediaInfo):
             guess = guessit.guess_file_info(uri)
         self.series_title = guess["series"]
         self.series_year = guess["year"] if "year" in guess.keys() else ""
-        self.series_episode = guess["episodeNumber"]
+        self.series_episode = guess["episodeNumber"] if "episodeNumber" in guess.keys() else ""
         self.season = guess["season"] if "season" in guess.keys() else 1
         self.searched = SearchFromFile(self.uri, guess=guess)
 
@@ -133,7 +133,7 @@ class SearchFromFile():
         if guess["type"] == "episode":
             self.series_title = guess["series"]
             self.series_year = guess["year"] if "year" in guess.keys() else ""
-            self.series_episode = guess["episodeNumber"]
+            self.series_episode = guess["episodeNumber"] if "episodeNumber" in guess.keys() else ""
             self.season = guess["season"] if "season" in guess.keys() else 1
 
     @staticmethod
