@@ -163,9 +163,9 @@ class Media():
             raise ValueError("Can't play back %s because it is not a file" % self)
 
     def play_trailer(self):
-        trailer = self.media.get_trailer_uri()
+        trailer = self.media.get_trailer_url()
         title = trailer.title
-        uri = trailer.trailer_uri
+        uri = trailer.trailer_url
         print "\nPlaying", title, '\n'
         subprocess.call(["mpv", uri])
 
