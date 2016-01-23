@@ -92,6 +92,10 @@ class Console_ui:
         print '\n', "Listing of %s: " % self.d.path
         print "=" * (len(self.d.path)+13)
         for x in range(len(self.pwdlist)):
+            #TODO: also retrieve media info
+            if self.pwdlist[x].type == "file":
+                m = Media(self.pwdlist[x])
+                m.load_info()
             print "{:3d} : {}".format(x+1, self.pwdlist[x])
 
     def _bi_range(self, start, end):

@@ -10,6 +10,10 @@ import shelve
 from mimetypes import MimeTypes
 import datetime
 
+from whoosh.index import create_in
+from whoosh import index
+
+from whoosh.fields import *
 
 # import magic
 from utils import Struct
@@ -140,13 +144,31 @@ class Media():
         return cache_file
 
     def cache_on_disk(self):
-        print "retrieving remote information, please wait...\n"
+        # print "retrieving remote information, please wait...\n"
         info = self.media_info()
         self.__info_in_memory[self.item.uri] = {"retrieved_on": datetime.datetime.now(), "data": info}
+        title = info["imdb"]["title"]
+        self.update_whoosh(title)
         return info
 
+    def update_whoosh(self, title):
+        schema = Schema(uri=TEXT(stored=True), title=NGRAMWORDS(minsize=4, maxsize=20, stored=True,
+                                                                field_boost=1.0, tokenizer=None, at='start',
+                                                                queryor=False, sortable=False))
+        #TODO create a directory and index for whoosh
+        dirname = os.path.join(self.get_cache_dir() + "hmc.whoosh")
+        if not os.path.exists(dirname):
+            os.mkdir(dirname)
+            print "creating whoosh index directory"
+            ix = index.create_in(dirname, schema)
+        else:
+            ix = index.open_dir(dirname)
+        writer = ix.writer()
+        writer.add_document(title=unicode(title), uri=unicode(self.item.uri))
+        writer.commit()
+
     def load_info(self):
-        while self.item.uri in self.__info_in_memory.keys():      # if in memory
+        while self.item.uri in self.__info_in_memory:      # if in memory
             if self.__info_in_memory[self.item.uri]["retrieved_on"] + self.expiry < datetime.datetime.now():
                 return self.cache_on_disk()
             else:
@@ -163,9 +185,9 @@ class Media():
             raise ValueError("Can't play back %s because it is not a file" % self)
 
     def play_trailer(self):
-        trailer = self.media.get_trailer_uri()
+        trailer = self.media.get_trailer_url()
         title = trailer.title
-        uri = trailer.trailer_uri
+        uri = trailer.trailer_url
         print "\nPlaying", title, '\n'
         subprocess.call(["mpv", uri])
 
@@ -189,6 +211,7 @@ class Media():
             film = self.media.imdb_film()
             rt_info = self.media.rt_info(film)
             imdb_info = self.media.imdb_info(film)
+            #TODO  check whether tvdb can get the series id
             film_info = dict(imdb=imdb_info, rt=rt_info)
             self.__info_in_memory[self.item.uri] = {"retrieved_on": datetime.datetime.now(),
                                                "data": film_info}
@@ -223,5 +246,33 @@ class uriItem(Item):
         return True
     
 
-
-
+#
+#
+# for top, dirs, files in os.walk('/home/raquel/shire/vault/Movies/'):
+#     for nm in files:
+#         fileInfo = {
+#             'FileName': unicode(nm),
+#             'FilePath': unicode(os.path.join(top, nm))
+#
+#         }
+#         writer.add_document(FileName=u'%s'%fileInfo['FileName'],FilePath=u'%s'%fileInfo['FilePath'])
+#
+# writer.commit()
+# from whoosh.qparser import QueryParser
+# def search(search_term):
+#     with ix.searcher() as searcher:
+#         query = QueryParser("title", ix.schema).parse(unicode(search_term))
+#         results = searcher.search(query)
+#         uri_list = [r["uri"] for r in results]
+#         return uri_list
+# #
+#
+#
+# schema = Schema(uri=TEXT(stored=True), title=NGRAMWORDS(minsize=4, maxsize=20, stored=True,
+#                  field_boost=1.0, tokenizer=None, at='start', queryor=False,
+#                  sortable=False))
+# ix = create_in("indexdir", schema)
+# writer = ix.writer()
+# writer.add_document(title = unicode(item1_title), uri = unicode(item1_uri))
+# writer.add_document(title=u'Crazy Stones', uri = u'/home/raquel/Movies/crazy_stones.yify.mp4')
+# writer.commit()
