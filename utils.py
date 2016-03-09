@@ -28,8 +28,7 @@ def __shell_quote(s):
 def subliminal_cache():
     DEFAULT_CACHE_FILE = os.path.join(xdg.BaseDirectory.save_cache_path('subliminal'), 'subliminal_cache.dbm')
     cache_file = os.path.abspath(os.path.expanduser(DEFAULT_CACHE_FILE))
-    subliminal.cache_region.configure('dogpile.cache.dbm',
-                                      arguments={'filename': cache_file, "lock_factory": subliminal.MutexLock})
+    subliminal.region.configure('dogpile.cache.dbm', arguments={'filename': cache_file})
 
 
 @contextlib.contextmanager

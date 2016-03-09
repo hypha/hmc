@@ -31,28 +31,30 @@ class MediaInfo(object):
             return SeriesInfo(uri, guess=video)
 
     def get_subtitle(self, file_path, title):
-        provider_configs = dict(addic7ted={'username': "username", 'password': "password"})
-        providers = subliminal.provider_manager.available_providers
+        # provider_configs = dict(addic7ted={'username': "username", 'password': "password"})
+        providers = subliminal.provider_manager.names()
 
-        # print providers
         try:
-            videos = subliminal.scan_videos([file_path], subtitles=True, embedded_subtitles=True)
-
-            subs = subliminal.api.download_best_subtitles(videos, {Language("eng")},
-                                                          providers=providers, provider_configs=provider_configs)
-            if len(subs) != 0:
-                print "Found subtitle on: ", subs.values()[0][0]
-            subliminal.save_subtitles(subs)
+            video = subliminal.scan_video(file_path, subtitles=True, embedded_subtitles=True)
+            if video.subtitle_languages != set([]):
+                print "Subtitle already exists"
+            else:
+                subs = subliminal.download_best_subtitles({video}, {Language("eng")},
+                                                          providers=providers)
+                if len(subs) != 0:
+                    print "Found subtitle on: ", subs.values()[0][0]
+                subliminal.save_subtitles(video, subs[video])
+                return subs
         except Exception as e:
             print "Subliminal Error: ", e
             pass
-        finally:
-            if "subs" not in locals() or len(subs.values()) == 0:
-                print "\ntrying YIFY subtitles..."
-                with stdoutIO() as subs:
-                    yify.search_subtitle(title)
-                    subs = {"sub_link": subs.getvalue()}
-        return subs
+        # finally:
+        #     if "subs" not in locals() or len(subs.values()) == 0:
+        #         print "\ntrying YIFY subtitles..."
+        #         with stdoutIO() as subs:
+        #             yify.search_subtitle(title)
+        #             subs = {"sub_link": subs.getvalue()}
+
 
 
 class FilmInfo(MediaInfo):

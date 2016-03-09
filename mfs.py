@@ -162,7 +162,7 @@ class Media():
         else:
             raise ValueError("Can't play back %s because it is not a file" % self)
 
-    def play_trailer(self):
+    def play_tralerler(self):
         trailer = self.media.get_trailer_url()
         title = trailer.title
         uri = trailer.trailer_url
@@ -181,8 +181,8 @@ class Media():
             subtitles_count = sum([len(s) for s in subs.values()])
             if subtitles_count == 1:
                 print '%d subtitle downloaded' % subtitles_count
-            if subtitles_count > 1:
-                print "\nYIFY subtitle downloaded"
+            # if subtitles_count > 1:
+            #     print "\nYIFY subtitle downloaded"
 
     def media_info(self):
         if self.media.type == "film":
