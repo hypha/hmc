@@ -1,6 +1,6 @@
 babelfish>=0.5.4
 enzyme>=0.4.1
-guessit>=0.9.4
+guessit==0.9.4
 IMDbPY>=5.0
 Pafy>=0.3.72
 pytvdbapi>=0.5.0
