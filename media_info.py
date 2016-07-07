@@ -77,12 +77,10 @@ class FilmInfo(MediaInfo):
         if self.trailer_url is None:
             # url = "https://gdata.youtube.com/feeds/api/videos/?q={0}+{1}+trailer&alt=jsonc&v=2"
             url = "https://www.googleapis.com/youtube/v3/search?part=snippet&" \
-                  "key=AIzaSyBUq6TUKRqDgvpujK4g_Q3jlAguXnGuPTY&q={0}+{1}+trailer"
+                  "key= AIzaSyAqRCdRbrYQMIIVg9lEJpBjONQDJ085qAY&q={0}+{1}+trailer"
             url = url.format(urllib.quote_plus(self.film_title.encode("ascii", "ignore")), self.film_year)
-
             wdata = utf8_decode(urllib.urlopen(url).read())
             wdata = json.loads(wdata)
-
             trailer_id = wdata["items"][0]["id"]["videoId"]
             self.trailer_url = "https://www.youtube.com/watch?v="+trailer_id
             title = wdata["items"][0]['snippet']["title"]

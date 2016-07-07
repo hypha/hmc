@@ -162,7 +162,7 @@ class Media():
         else:
             raise ValueError("Can't play back %s because it is not a file" % self)
 
-    def play_tralerler(self):
+    def play_trailer(self):
         trailer = self.media.get_trailer_url()
         title = trailer.title
         uri = trailer.trailer_url
