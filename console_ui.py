@@ -140,49 +140,52 @@ class Console_ui:
     def format_info(file):
         info_method = Media(file)
         info = info_method.load_info()
-        if "imdb" in info.keys():
-            film_info = info
-            if film_info["imdb"] is None:
-                print "Currently there is no information for this film"
-            else:
-                print film_info["imdb"].summary().encode('utf8')
-                if film_info["rt"] is None:
-                    print "\nNo Rotten Tomato score available for the film"
+        if info is not None:
+            if "imdb" in info.keys():
+                film_info = info
+                if film_info["imdb"] is None:
+                    print "Currently there is no information for this film"
                 else:
-                    rt_rating = film_info["rt"]["ratings"]
-                    print "\nRotten Tomato scores: ",
-                    for key, value in rt_rating.iteritems():
-                        print "%s: %s    " % (key, value),
-                    print
-        if "tvdb" in info.keys():
-            show_info = info
-            if show_info is None:
-                print "No information on the show or film"
-            else:
-                show = show_info["tvdb"]
-                # show_imdb = self.imdb_get_results(show.IMDB_ID)[0]
-                # IMDb().update(show_imdb)
+                    print film_info["imdb"].summary().encode('utf8')
+                    if film_info["rt"] is None:
+                        print "\nNo Rotten Tomato score available for the film"
+                    else:
+                        rt_rating = film_info["rt"]["ratings"]
+                        print "\nRotten Tomato scores: ",
+                        for key, value in rt_rating.iteritems():
+                            print "%s: %s    " % (key, value),
+                        print
+            if "tvdb" in info.keys():
+                show_info = info
+                if show_info is None:
+                    print "No information on the show or film"
+                else:
+                    show = show_info["tvdb"]
+                    # show_imdb = self.imdb_get_results(show.IMDB_ID)[0]
+                    # IMDb().update(show_imdb)
 
-                e = show_info["episode"]
-                print "\nSeries"
-                print "=" * (len("Series"))
-                dict1 = OrderedDict([("Title", show.SeriesName),
-                                     ("Air Time", "%s - %s;  %s (First aired)"
-                                      % (show.Airs_DayOfWeek, show.Airs_Time, show.FirstAired)),
-                                     ("Genres", ', '.join(str(p) for p in show.Genre)),
-                                     ("Runtime", str(show.Runtime) + " mins"),
-                                     ("Network", show.Network),
-                                     ("Show Rating", "TVDB - %s (%s votes) " % (show.Rating, show.RatingCount)),
-                                     ("Overview", show.Overview)])
+                    e = show_info["episode"]
+                    print "\nSeries"
+                    print "=" * (len("Series"))
+                    dict1 = OrderedDict([("Title", show.SeriesName),
+                                         ("Air Time", "%s - %s;  %s (First aired)"
+                                          % (show.Airs_DayOfWeek, show.Airs_Time, show.FirstAired)),
+                                         ("Genres", ', '.join(str(p) for p in show.Genre)),
+                                         ("Runtime", str(show.Runtime) + " mins"),
+                                         ("Network", show.Network),
+                                         ("Show Rating", "TVDB - %s (%s votes) " % (show.Rating, show.RatingCount)),
+                                         ("Overview", show.Overview)])
 
-                dict2 = OrderedDict([(e.SeasonNumber, " Epi %s - %s" % (e.EpisodeNumber, e.EpisodeName)),
-                                     ("Episode Air Date", e.FirstAired),
-                                     ("Episode Rating", e.Rating),
-                                     ("Episode Plot", e.Overview)])
+                    dict2 = OrderedDict([(e.SeasonNumber, " Epi %s - %s" % (e.EpisodeNumber, e.EpisodeName)),
+                                         ("Episode Air Date", e.FirstAired),
+                                         ("Episode Rating", e.Rating),
+                                         ("Episode Plot", e.Overview)])
 
-                print tabulate(dict1.items(), stralign="left", tablefmt="plain")
-                print "\n"
-                print tabulate(dict2.items(), stralign="left", tablefmt="plain")
+                    print tabulate(dict1.items(), stralign="left", tablefmt="plain")
+                    print "\n"
+                    print tabulate(dict2.items(), stralign="left", tablefmt="plain")
+        else:
+            print "No information for the show"
 
     def execute(self, cmd=None, match=None, choice=None):
 
@@ -251,13 +254,13 @@ class Console_ui:
 
         if cmd == "info":
             info_choice = match.group('index')
-            try:
-                item = self.pwdlist[int(info_choice)-1]
-                print '\n\n'
-                self.format_info(item)
-                return "prompt"
-            except Exception as e:
-                print "Error in input: %s" % e
+            # try:
+            item = self.pwdlist[int(info_choice)-1]
+            print '\n\n'
+            self.format_info(item)
+            return "prompt"
+            # except Exception as e:
+            #     print "Error in input: %s" % e
             return "prompt"
 
         if cmd == "youtube":

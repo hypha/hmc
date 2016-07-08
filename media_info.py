@@ -7,11 +7,11 @@ from collections import namedtuple
 
 import guessit
 import subliminal
+from subliminal.core import search_external_subtitles
 from babelfish import Language
 from imdb import IMDb
 from rottentomatoes import RT
 from pytvdbapi import api
-import yify
 
 from utils import utf8_decode, stdoutIO
 
@@ -24,19 +24,20 @@ class MediaInfo(object):
 
     @staticmethod
     def factory(uri):
-        video = guessit.guess_file_info(uri)
+        video = guessit.guessit(uri)
         if video["type"] == "movie":
             return FilmInfo(uri, guess=video)
         elif video["type"] == "episode":
             return SeriesInfo(uri, guess=video)
 
     def get_subtitle(self, file_path, title):
-        # provider_configs = dict(addic7ted={'username': "username", 'password': "password"})
+        provider_configs = dict(addic7ted={'username': "username", 'password': "password"})
         providers = subliminal.provider_manager.names()
 
         try:
-            video = subliminal.scan_video(file_path, subtitles=True, embedded_subtitles=True)
-            if video.subtitle_languages != set([]):
+            video = subliminal.scan_video(file_path)
+
+            if search_external_subtitles(video.name) != {}:
                 print "Subtitle already exists"
             else:
                 subs = subliminal.download_best_subtitles({video}, {Language("eng")},
@@ -48,12 +49,6 @@ class MediaInfo(object):
         except Exception as e:
             print "Subliminal Error: ", e
             pass
-        # finally:
-        #     if "subs" not in locals() or len(subs.values()) == 0:
-        #         print "\ntrying YIFY subtitles..."
-        #         with stdoutIO() as subs:
-        #             yify.search_subtitle(title)
-        #             subs = {"sub_link": subs.getvalue()}
 
 
 
@@ -63,7 +58,7 @@ class FilmInfo(MediaInfo):
         self.type = "film"
 
         if guess is None:
-            guess = guessit.guess_file_info(uri)
+            guess = guessit.guessit(uri)
         try:
             self.film_title = guess["title"]
             self.film_year = guess["year"] if "year" in guess.keys() else ""
@@ -107,10 +102,10 @@ class SeriesInfo(MediaInfo):
         self.type = "series"
 
         if guess is None:
-            guess = guessit.guess_file_info(uri)
-        self.series_title = guess["series"]
+            guess = guessit.guessit(uri)
+        self.series_title = guess["title"]
         self.series_year = guess["year"] if "year" in guess.keys() else ""
-        self.series_episode = guess["episodeNumber"] if "episodeNumber" in guess.keys() else ""
+        self.series_episode = guess["episode"] if "episode" in guess.keys() else ""
         self.season = guess["season"] if "season" in guess.keys() else 1
         self.searched = SearchFromFile(self.uri, guess=guess)
 
@@ -124,14 +119,14 @@ class SeriesInfo(MediaInfo):
 class SearchFromFile():
     def __init__(self, uri, guess=None):
         if guess is None:
-            guess = guessit.guess_file_info(uri)
+            guess = guessit.guessit(uri)
 
         if guess["type"] == "movie":
             self.film_title = guess["title"]
             self.film_year = guess["year"] if "year" in guess.keys() else ""
 
         if guess["type"] == "episode":
-            self.series_title = guess["series"]
+            self.series_title = guess["title"]
             self.series_year = guess["year"] if "year" in guess.keys() else ""
             self.series_episode = guess["episodeNumber"] if "episodeNumber" in guess.keys() else ""
             self.season = guess["season"] if "season" in guess.keys() else 1
@@ -223,7 +218,7 @@ class SearchFromFile():
 
     def imdb_match(self):
         results = self.imdb_get_results(self.search_string(self.film_title, self.film_year))
-        results = [f for f in results if f["kind"] == "movie" or f["kind"] == "tv movie"]
+        results = [f for f in results if f["kind"] == "movie" or f["kind"] == "tv movie" or f["kind"] == "tv mini series"]
         if len(results) != 0:                               # 1. has results
             right_year = self.filter_year(results)       # 1.1 right year
             if len(right_year) != 0:                             # 1.11 has year
@@ -243,11 +238,33 @@ class SearchFromFile():
                 scores = [[i, self.levenshtein(i["title"], self.film_title)] for i in results]
                 film = min(scores, key=lambda x: x[1])[0]
                 return film
+
         else:                                               # no results, shrink title
-            results = [self.imdb_get_results(self.search_string(t, self.film_year))
-                       for t in self.shrink_title(self.film_title)]
-            results = [f for f in results if len(f) != 0]
-            return self.shrunk_film_result(self.film_title, self.film_year, results)
+            try:
+                results = [self.imdb_get_results(self.search_string(t, self.film_year))
+                           for t in self.shrink_title(self.film_title)]
+                results = [f for f in results if len(f) != 0]
+                return self.shrunk_film_result(self.film_title, self.film_year, results)
+            except Exception: ##TODO the following part should be put into a function.
+                results = self.imdb_get_results(self.search_string(self.film_title, ""))
+
+                if len(results) != 0:  # 1. has results
+                    right_year = self.filter_year(results)  # 1.1 right year
+                    if len(right_year) != 0:  # 1.11 has year
+                        films = [results[y] for y in right_year if  # a. get the film that match with the title
+                                 self.score_title(results[y]["title"], self.film_title) <= 0.2]
+                        if len(films) != 0:
+                            return films[0]
+                        else:  # b. if no match, compare akas
+                            for y in right_year:
+                                film = results[y]
+                                film = self.imdb_akas(film)
+                                if film is None:
+                                    pass
+                                else:
+                                    return film
+                    else:
+                        return
 
 
     def imdb_update(self, f):
